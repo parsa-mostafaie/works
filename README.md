@@ -102,16 +102,6 @@ manifest.json      PWA manifest
 README.md
 ```
 
-## Migrating from the JSONBin version
-
-If you already installed the older JSONBin-based build, apply this update with:
-
-```bash
-git add index.html styles.css js/sync.js js/app.js README.md && git commit -m "feat(sync): switch cloud backend from JSONBin to GitHub Gist with in-app setup helper" && git push
-```
-
-Then open the app, go to **⚙️ → 🔑 Setup Guide**, and set up a Gist as described above. Your local data stays intact — the first sync merges it into the new gist.
-
 ## License
 
 MIT
