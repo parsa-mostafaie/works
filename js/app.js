@@ -11,10 +11,12 @@
       this._bindHeader();
       this._bindFilters();
       this._bindModal();
+      this._bindGuide();
       this._bindBulk();
       this._bindSync();
       this._bindShortcuts();
       this._autoSyncLoop();
+      this._reflectSyncConfig();
     }
 
     _bindHeader() {
@@ -52,19 +54,38 @@
       const sclose = () => { sm.hidden = true; };
       document.getElementById('settingsClose').onclick = sclose;
       sm.addEventListener('click', (e) => { if (e.target === sm) sclose(); });
+
       document.getElementById('syncNowBtn').onclick = () => this.doSync();
+      document.getElementById('testConnBtn').onclick = () => this.testConnection();
+      document.getElementById('openGuideBtn').onclick = () => this.openGuide();
+      document.getElementById('openGuideBtn2').onclick = () => this.openGuide();
+
       document.getElementById('clearAllBtn').onclick = () => {
         if (confirm('Delete ALL works? This cannot be undone.')) {
           this.store.clearAll();
           Utils.toast('All data cleared');
         }
       };
-      document.getElementById('syncUrl').oninput = (e) => {
-        this.store.saveSettings({ syncUrl: e.target.value.trim() });
+
+      const urlInput = document.getElementById('syncUrl');
+      const keyInput = document.getElementById('syncKey');
+
+      urlInput.oninput = (e) => {
+        const v = e.target.value.trim();
+        this.store.saveSettings({ syncUrl: v });
+        this._reflectSyncConfig();
       };
-      document.getElementById('syncKey').oninput = (e) => {
+      keyInput.oninput = (e) => {
         this.store.saveSettings({ syncKey: e.target.value.trim() });
+        this._reflectSyncConfig();
       };
+    }
+
+    _bindGuide() {
+      const gm = document.getElementById('guideModal');
+      const close = () => { gm.hidden = true; };
+      document.getElementById('guideClose').onclick = close;
+      gm.addEventListener('click', (e) => { if (e.target === gm) close(); });
     }
 
     _bindBulk() {
@@ -112,15 +133,25 @@
         } else if (e.key === 'Escape') {
           document.getElementById('modal').hidden = true;
           document.getElementById('settingsModal').hidden = true;
+          document.getElementById('guideModal').hidden = true;
         }
       });
     }
 
     _autoSyncLoop() {
       setInterval(() => {
-        const s = this.store.getSettings();
-        if (s.syncUrl) this.doSync().catch(() => {});
+        if (this.sync.hasConfig()) this.doSync().catch(() => {});
       }, 60000);
+    }
+
+    _reflectSyncConfig() {
+      const ok = this.sync.hasConfig();
+      const dot = document.getElementById('syncDot');
+      const text = document.getElementById('syncText');
+      if (!ok) {
+        dot.classList.remove('syncing', 'error');
+        text.textContent = 'Local only';
+      }
     }
 
     openEditor(id) {
@@ -162,7 +193,14 @@
       const s = this.store.getSettings();
       document.getElementById('syncUrl').value = s.syncUrl || '';
       document.getElementById('syncKey').value = s.syncKey || '';
+      document.getElementById('syncStatusText').textContent = this.sync.hasConfig()
+        ? 'Ready to sync.'
+        : 'Add a Gist ID and token to enable cloud sync.';
       document.getElementById('settingsModal').hidden = false;
+    }
+
+    openGuide() {
+      document.getElementById('guideModal').hidden = false;
     }
 
     export() {
@@ -197,7 +235,26 @@
       e.target.value = '';
     }
 
+    async testConnection() {
+      try {
+        const info = await this.sync.testConnection();
+        const files = info.files.length ? info.files.join(', ') : 'none';
+        document.getElementById('syncStatusText').textContent =
+          '✓ Connected to gist ' + String(info.id).slice(0, 8) + '… | files: ' + files +
+          (info.hasWorksFile ? '' : ' (works.json will be created on first push)');
+        Utils.toast('Connection OK');
+      } catch (err) {
+        Utils.toast('✗ ' + err.message);
+        document.getElementById('syncStatusText').textContent = 'Error: ' + err.message;
+      }
+    }
+
     async doSync() {
+      if (!this.sync.hasConfig()) {
+        Utils.toast('Set up sync first (Settings → Setup Guide)');
+        this.openSettings();
+        return;
+      }
       try {
         await this.sync.sync();
         Utils.toast('Synced');

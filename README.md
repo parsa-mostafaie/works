@@ -1,6 +1,6 @@
 # Works
 
-A single-page application for managing works (items) with live editing, bulk actions, JSON import/export, localStorage persistence, and optional cross-device cloud sync.
+A single-page application for managing works with live editing, bulk actions, JSON import/export, localStorage persistence, and optional cross-device cloud sync via **GitHub Gist** — fully accessible from Iran without a VPN.
 
 ## Features
 
@@ -10,7 +10,8 @@ A single-page application for managing works (items) with live editing, bulk act
 - **Import / Export JSON** — full data portability
 - **LocalStorage persistence** — everything saved automatically
 - **Cross-tab sync** — BroadcastChannel + storage events keep tabs in sync
-- **Cross-device cloud sync** — plug in a JSONBin.io (or compatible) endpoint
+- **Cross-device cloud sync** — via a private GitHub Gist (no VPN needed in Iran)
+- **In-app setup helper** — guided token + gist creation with one click
 - **PWA-ready** — service worker + manifest for offline use
 - **GitHub Pages deployment** — automatic via Actions
 
@@ -28,27 +29,31 @@ Then visit `http://localhost:8000`.
 
 ### Deployment
 
-Push to `main` — the GitHub Actions workflow will deploy to GitHub Pages automatically.
+Push to `main` — the GitHub Actions workflow deploys to GitHub Pages automatically.
 
 Enable Pages once in your repo settings: **Settings → Pages → Source: GitHub Actions**.
 
-## Cloud Sync Setup (Optional)
+## Cloud Sync via GitHub Gist
 
-The app speaks a simple REST protocol compatible with [JSONBin.io](https://jsonbin.io):
+Works syncs across devices through a **private GitHub Gist**. It uses only the `gist` scope on a personal access token, works fine from Iran without a VPN, and is free with no request limits that matter at this scale.
 
-1. Create a free JSONBin account.
-2. Create a new bin with `[]` as content.
-3. Copy the bin URL (e.g. `https://api.jsonbin.io/v3/b/XXXXXX`) and your Master Key.
-4. Open the app → click ⚙️ → paste URL and key → **Sync Now**.
+### Quick start
 
-The app will then:
-- Pull remote data on demand, or every 60 seconds automatically
-- Merge by `id` using `updatedAt` (last-write-wins)
-- Push the merged state back
+1. Open the app → click **⚙️** → **🔑 Setup Guide**
+2. The guide walks you through:
+   - Creating a **personal access token** (only the `gist` scope)
+   - Creating a **secret gist** with a `works.json` file containing `[]`
+   - Copying the **Gist ID** from the URL
+3. Paste both values into Settings → **Test Connection** → **Sync Now**
+4. Repeat on every device with the same Gist ID and token
 
-Any REST endpoint that returns a JSON array, or an object with `.record` / `.items` / `.record.items` on `GET`, and accepts a JSON array on `PUT`, will work.
+### What the app does
 
-## Data Model
+- **On demand** (Sync button) or **every 60 s** — pulls remote, merges, pushes
+- **Merge strategy:** last-write-wins by `updatedAt`, union of all item IDs
+- **Nothing leaves your device** unless you configure a Gist ID and token
+
+### Data model
 
 ```json
 {
@@ -64,6 +69,15 @@ Any REST endpoint that returns a JSON array, or an object with `.record` / `.ite
 }
 ```
 
+### Endpoint format accepted
+
+Both forms work in the **Gist ID or URL** field:
+
+- Raw ID: `a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4`
+- Full URL: `https://gist.github.com/your-user/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4`
+
+The app extracts the ID automatically.
+
 ## Keyboard Shortcuts
 
 | Keys | Action |
@@ -75,11 +89,11 @@ Any REST endpoint that returns a JSON array, or an object with `.record` / `.ite
 ## File Structure
 
 ```
-index.html         main page
+index.html         main page + setup guide modal
 styles.css         all styles
 js/utils.js        helpers (uid, debounce, toast, ...)
 js/storage.js      localStorage store with change events + cross-tab
-js/sync.js         cloud sync client
+js/sync.js         GitHub Gist sync client
 js/ui.js           DOM rendering
 js/app.js          orchestration + service worker registration
 sw.js              service worker (offline cache)
@@ -87,6 +101,16 @@ manifest.json      PWA manifest
 .github/workflows/deploy.yml
 README.md
 ```
+
+## Migrating from the JSONBin version
+
+If you already installed the older JSONBin-based build, apply this update with:
+
+```bash
+git add index.html styles.css js/sync.js js/app.js README.md && git commit -m "feat(sync): switch cloud backend from JSONBin to GitHub Gist with in-app setup helper" && git push
+```
+
+Then open the app, go to **⚙️ → 🔑 Setup Guide**, and set up a Gist as described above. Your local data stays intact — the first sync merges it into the new gist.
 
 ## License
 

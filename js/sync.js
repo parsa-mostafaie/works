@@ -1,51 +1,132 @@
 (function (global) {
   'use strict';
 
+  const GIST_FILENAME = 'works.json';
+  const GIST_API = 'https://api.github.com/gists';
+
   class CloudSync {
     constructor(store) {
       this.store = store;
       this.status = 'idle';
       this._listeners = new Set();
+      this._lastGistId = '';
     }
 
     onStatus(cb) { this._listeners.add(cb); return () => this._listeners.delete(cb); }
+
     _setStatus(s, msg) {
       this.status = s;
       this._listeners.forEach(cb => { try { cb(s, msg || ''); } catch (e) {} });
     }
 
-    _headers() {
-      const { syncKey } = this.store.getSettings();
+    _token() {
+      return (this.store.getSettings().syncKey || '').trim();
+    }
+
+    /**
+     * Accepts either a raw Gist ID ("a1b2c3d4e5f6...") or a full Gist URL
+     * ("https://gist.github.com/user/a1b2c3d4e5f6...") and returns the ID.
+     */
+    _gistId() {
+      const raw = (this.store.getSettings().syncUrl || '').trim();
+      if (!raw) return '';
+      // Full URL form
+      const m = raw.match(/gist\.github\.com\/(?:[^/]+\/)?([a-f0-9]+)/i);
+      if (m) return m[1];
+      // Try to peel off any query/hash and validate as hex
+      const cleaned = raw.split(/[?#]/)[0].trim();
+      if (/^[a-f0-9]{16,}$/i.test(cleaned)) return cleaned;
+      return cleaned;
+    }
+
+    _headers(extra) {
+      const token = this._token();
+      const h = Object.assign({
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28'
+      }, extra || {});
+      if (token) h['Authorization'] = 'Bearer ' + token;
+      return h;
+    }
+
+    hasConfig() {
+      return !!(this._gistId() && this._token());
+    }
+
+    /** Lightweight check: does the Gist exist and does the token have access? */
+    async testConnection() {
+      const gistId = this._gistId();
+      const token = this._token();
+      if (!gistId) throw new Error('Gist ID is required');
+      if (!token) throw new Error('GitHub token is required');
+
+      this._setStatus('syncing', 'Testing connection...');
+      const res = await fetch(GIST_API + '/' + gistId, {
+        headers: this._headers()
+      });
+
+      if (res.status === 401) throw new Error('Invalid token (401)');
+      if (res.status === 403) throw new Error('Token lacks gist scope (403)');
+      if (res.status === 404) throw new Error('Gist not found (404) — check the ID');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+
+      const data = await res.json();
+      this._lastGistId = data.id || gistId;
+      this._setStatus('idle', 'Connection OK');
+
       return {
-        'Content-Type': 'application/json',
-        'X-Master-Key': syncKey || '',
-        'X-Bin-Meta': 'false'
+        id: data.id || gistId,
+        description: data.description || '',
+        files: Object.keys(data.files || {}),
+        hasWorksFile: !!(data.files && data.files[GIST_FILENAME]),
+        updatedAt: data.updated_at || null
       };
     }
 
     async pull() {
-      const { syncUrl } = this.store.getSettings();
-      if (!syncUrl) throw new Error('No sync URL configured');
+      const gistId = this._gistId();
+      if (!gistId) throw new Error('No Gist ID configured');
       this._setStatus('syncing', 'Pulling...');
-      const res = await fetch(syncUrl, { headers: this._headers() });
+
+      const res = await fetch(GIST_API + '/' + gistId, {
+        headers: this._headers()
+      });
       if (!res.ok) throw new Error('Pull failed: ' + res.status);
+
       const data = await res.json();
-      let items = [];
-      if (Array.isArray(data)) items = data;
-      else if (Array.isArray(data.record)) items = data.record;
-      else if (Array.isArray(data.items)) items = data.items;
-      else if (data.record && Array.isArray(data.record.items)) items = data.record.items;
-      return items;
+      const file = data.files && data.files[GIST_FILENAME];
+      if (!file) {
+        // Gist exists but has no works.json yet — treat as empty
+        return [];
+      }
+      const content = file.content || '';
+      if (!content.trim()) return [];
+      try {
+        const parsed = JSON.parse(content);
+        if (Array.isArray(parsed)) return parsed;
+        if (parsed && Array.isArray(parsed.items)) return parsed.items;
+        return [];
+      } catch (e) {
+        throw new Error('Gist content is not valid JSON');
+      }
     }
 
     async push() {
-      const { syncUrl } = this.store.getSettings();
-      if (!syncUrl) throw new Error('No sync URL configured');
+      const gistId = this._gistId();
+      if (!gistId) throw new Error('No Gist ID configured');
       this._setStatus('syncing', 'Pushing...');
-      const res = await fetch(syncUrl, {
-        method: 'PUT',
-        headers: this._headers(),
-        body: JSON.stringify(this.store.list())
+
+      const body = {
+        files: {}
+      };
+      body.files[GIST_FILENAME] = {
+        content: JSON.stringify(this.store.list(), null, 2)
+      };
+
+      const res = await fetch(GIST_API + '/' + gistId, {
+        method: 'PATCH',
+        headers: this._headers({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(body)
       });
       if (!res.ok) throw new Error('Push failed: ' + res.status);
       return true;

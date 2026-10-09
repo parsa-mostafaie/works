@@ -113,21 +113,96 @@
         <button class="icon-btn" id="settingsClose">✕</button>
       </div>
       <div class="modal-body">
-        <h3>Cloud Sync (optional)</h3>
-        <p class="help">Enter a JSONBin.io bin URL and access key to sync across devices. Leave empty for local-only mode.</p>
+        <div class="setup-callout">
+          <div class="setup-callout-text">
+            <strong>First time?</strong>
+            <span>Open the setup guide to create your token and gist in 3 minutes.</span>
+          </div>
+          <button class="btn btn-sm btn-primary" id="openGuideBtn">🔑 Setup Guide</button>
+        </div>
+
+        <h3>Cloud Sync (GitHub Gist)</h3>
+        <p class="help">Sync works across devices via a private GitHub Gist. <strong>Works in Iran — no VPN required.</strong></p>
+
         <label>
-          <span>Sync Endpoint URL</span>
-          <input type="url" id="syncUrl" placeholder="https://api.jsonbin.io/v3/b/...">
+          <span>Gist ID or URL</span>
+          <input type="text" id="syncUrl" placeholder="a1b2c3d4e5f6  or  https://gist.github.com/user/a1b2c3d4e5f6">
         </label>
         <label>
-          <span>Sync API Key</span>
-          <input type="password" id="syncKey" placeholder="X-Master-Key">
+          <span>GitHub Token</span>
+          <input type="password" id="syncKey" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
         </label>
-        <button class="btn" id="syncNowBtn">Sync Now</button>
+
+        <div class="row-actions">
+          <button class="btn" id="testConnBtn">✓ Test Connection</button>
+          <button class="btn" id="syncNowBtn">☁️ Sync Now</button>
+          <button class="btn" id="openGuideBtn2">🔑 How to get a token</button>
+        </div>
+
         <p class="status-text" id="syncStatusText"></p>
         <hr>
         <h3>Data</h3>
         <button class="btn btn-danger" id="clearAllBtn">Clear All Data</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="guideModal" hidden>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🔑 GitHub Gist Sync Setup</h2>
+        <button class="icon-btn" id="guideClose">✕</button>
+      </div>
+      <div class="modal-body guide-body">
+        <p class="guide-intro">Follow these 5 steps once per GitHub account. Every device will then share the same data.</p>
+
+        <div class="guide-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h3>Create a personal access token</h3>
+            <p>Only the <code>gist</code> scope is needed. It's free and takes ~30 seconds.</p>
+            <a class="btn btn-sm btn-primary" href="https://github.com/settings/tokens/new?scopes=gist&description=Works+Sync" target="_blank" rel="noopener">Open GitHub token page →</a>
+          </div>
+        </div>
+
+        <div class="guide-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h3>Copy the token</h3>
+            <p>It looks like <code>ghp_xxxxxxxxxxxxxxxxxxxx</code>. Treat it like a password.</p>
+          </div>
+        </div>
+
+        <div class="guide-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h3>Create a secret gist</h3>
+            <p>Name the file <code>works.json</code> and set content to <code>[]</code> (empty array). Click <strong>Create secret gist</strong>.</p>
+            <a class="btn btn-sm" href="https://gist.github.com/" target="_blank" rel="noopener">Open GitHub Gist →</a>
+          </div>
+        </div>
+
+        <div class="guide-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h3>Copy the Gist ID</h3>
+            <p>From the gist URL: <code>gist.github.com/YOUR-USER/<mark>GIST-ID</mark></code></p>
+            <p class="help">You can also paste the whole URL into the app — we'll extract the ID automatically.</p>
+          </div>
+        </div>
+
+        <div class="guide-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h3>Paste &amp; test</h3>
+            <p>Back in <strong>Settings</strong>: paste the Gist ID and token, then click <strong>Test Connection</strong>. If it passes, click <strong>Sync Now</strong>. Done.</p>
+          </div>
+        </div>
+
+        <div class="setup-callout tip">
+          <strong>💡 Privacy tip:</strong>
+          <span>A "secret" gist isn't listed in search, but anyone with the URL can read it. Don't put passwords or secrets inside your works.</span>
+        </div>
       </div>
     </div>
   </div>
