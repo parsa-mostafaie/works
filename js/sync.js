@@ -30,10 +30,8 @@
     _gistId() {
       const raw = (this.store.getSettings().syncUrl || '').trim();
       if (!raw) return '';
-      // Full URL form
       const m = raw.match(/gist\.github\.com\/(?:[^/]+\/)?([a-f0-9]+)/i);
       if (m) return m[1];
-      // Try to peel off any query/hash and validate as hex
       const cleaned = raw.split(/[?#]/)[0].trim();
       if (/^[a-f0-9]{16,}$/i.test(cleaned)) return cleaned;
       return cleaned;
@@ -95,10 +93,7 @@
 
       const data = await res.json();
       const file = data.files && data.files[GIST_FILENAME];
-      if (!file) {
-        // Gist exists but has no works.json yet — treat as empty
-        return [];
-      }
+      if (!file) return [];
       const content = file.content || '';
       if (!content.trim()) return [];
       try {
@@ -116,9 +111,7 @@
       if (!gistId) throw new Error('No Gist ID configured');
       this._setStatus('syncing', 'Pushing...');
 
-      const body = {
-        files: {}
-      };
+      const body = { files: {} };
       body.files[GIST_FILENAME] = {
         content: JSON.stringify(this.store.list(), null, 2)
       };

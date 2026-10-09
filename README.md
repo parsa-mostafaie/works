@@ -35,7 +35,7 @@ Enable Pages once in your repo settings: **Settings → Pages → Source: GitHub
 
 ## Cloud Sync via GitHub Gist
 
-Works syncs across devices through a **private GitHub Gist**. It uses only the `gist` scope on a personal access token, works fine from Iran without a VPN, and is free with no request limits that matter at this scale.
+Works syncs across devices through a **private GitHub Gist**. It uses only the `gist` scope on a personal access token, works fine from Iran without a VPN, and is free.
 
 ### Quick start
 
@@ -101,6 +101,16 @@ manifest.json      PWA manifest
 .github/workflows/deploy.yml
 README.md
 ```
+
+## Notes on the `[hidden]` fix
+
+`styles.css` starts with:
+
+```css
+[hidden] { display: none !important; }
+```
+
+This ensures the `hidden` attribute always wins over any component `display` rule (e.g. `.modal { display: flex }`). Without this line, `el.hidden = true` in JS has no effect because author CSS beats the browser's default `[hidden] { display: none }`.
 
 ## License
 
