@@ -17,6 +17,11 @@
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         this.items = raw ? JSON.parse(raw) : [];
+        // Normalize: ensure links is an array on every item
+        this.items.forEach(it => {
+          if (!Array.isArray(it.links)) it.links = [];
+          if (!Array.isArray(it.tags)) it.tags = [];
+        });
         const s = localStorage.getItem(SETTINGS_KEY);
         if (s) this.settings = Object.assign(this.settings, JSON.parse(s));
       } catch (e) {
@@ -67,15 +72,18 @@
       const now = Date.now();
       const item = Object.assign({
         id: (global.Utils && Utils.uid()) || ('id_' + now + '_' + Math.random().toString(36).slice(2, 7)),
-        title: 'Untitled',
+        title: 'بدون عنوان',
         description: '',
         category: '',
         date: '',
         tags: [],
+        links: [],
         done: false,
         createdAt: now,
         updatedAt: now
       }, data);
+      if (!Array.isArray(item.tags)) item.tags = [];
+      if (!Array.isArray(item.links)) item.links = [];
       this.items.push(item);
       this._emit();
       return item;
@@ -84,7 +92,10 @@
     update(id, patch) {
       const i = this.items.findIndex(x => x.id === id);
       if (i === -1) return null;
-      this.items[i] = Object.assign({}, this.items[i], patch, { updatedAt: Date.now() });
+      const merged = Object.assign({}, this.items[i], patch, { updatedAt: Date.now() });
+      if (!Array.isArray(merged.tags)) merged.tags = [];
+      if (!Array.isArray(merged.links)) merged.links = [];
+      this.items[i] = merged;
       this._emit();
       return this.items[i];
     }
@@ -117,6 +128,10 @@
 
     replaceAll(items) {
       this.items = Array.isArray(items) ? items.slice() : [];
+      this.items.forEach(it => {
+        if (!Array.isArray(it.tags)) it.tags = [];
+        if (!Array.isArray(it.links)) it.links = [];
+      });
       this._emit();
     }
 
@@ -124,6 +139,8 @@
       const map = new Map(this.items.map(i => [i.id, i]));
       (items || []).forEach(incoming => {
         if (!incoming || !incoming.id) return;
+        if (!Array.isArray(incoming.tags)) incoming.tags = [];
+        if (!Array.isArray(incoming.links)) incoming.links = [];
         const existing = map.get(incoming.id);
         if (!existing || (incoming.updatedAt || 0) > (existing.updatedAt || 0)) {
           map.set(incoming.id, incoming);

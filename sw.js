@@ -1,4 +1,4 @@
-const CACHE = 'works-v2';
+const CACHE = 'works-v3';
 const ASSETS = [
   './',
   './index.html',

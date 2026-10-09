@@ -1,51 +1,64 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6366f1">
-  <title>Works</title>
+  <title>🧩 کارها</title>
   <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="app-header">
     <div class="header-left">
-      <h1>🧩 Works</h1>
-      <span class="sync-status">
+      <h1>🧩 کارها</h1>
+      <span class="sync-status" title="وضعیت همگام‌سازی">
         <span class="dot" id="syncDot"></span>
-        <span id="syncText">Ready</span>
+        <span id="syncText">آماده</span>
       </span>
     </div>
     <div class="header-right">
-      <button class="btn btn-primary" id="addBtn">+ Add Work</button>
-      <button class="btn" id="importBtn">📥 Import</button>
-      <button class="btn" id="exportBtn">📤 Export</button>
-      <button class="btn" id="syncBtn">☁️ Sync</button>
-      <button class="btn" id="settingsBtn">⚙️</button>
+      <button class="btn btn-primary" id="addBtn" title="افزودن کار جدید (Ctrl+N)">
+        <span class="icon">➕</span> افزودن کار
+      </button>
+      <button class="btn" id="importBtn" title="ورود از فایل JSON">
+        <span class="icon">📥</span> ورود
+      </button>
+      <button class="btn" id="exportBtn" title="ذخیره در فایل JSON">
+        <span class="icon">📤</span> خروجی
+      </button>
+      <button class="btn" id="syncBtn" title="همگام‌سازی با فضای ابری">
+        <span class="icon">☁️</span> همگام‌سازی
+      </button>
+      <button class="btn icon-only" id="settingsBtn" title="تنظیمات (⚙️)">
+        ⚙️
+      </button>
     </div>
   </header>
 
   <main class="app-main">
     <aside class="sidebar">
       <div class="filter-section">
-        <h3>Search</h3>
-        <input type="text" id="searchInput" placeholder="Search... (Ctrl+K)">
+        <h3>🔍 جستجو</h3>
+        <input type="text" id="searchInput" placeholder="جستجو در عنوان، توضیحات، برچسب‌ها…">
       </div>
       <div class="filter-section">
-        <h3>Category</h3>
+        <h3>🏷️ دسته‌بندی</h3>
         <select id="categoryFilter">
-          <option value="">All Categories</option>
+          <option value="">همه دسته‌ها</option>
         </select>
       </div>
       <div class="filter-section">
-        <h3>Status</h3>
-        <label><input type="radio" name="status" value="" checked> All</label>
-        <label><input type="radio" name="status" value="active"> Active</label>
-        <label><input type="radio" name="status" value="done"> Done</label>
+        <h3>✅ وضعیت</h3>
+        <label><input type="radio" name="status" value="" checked> همه</label>
+        <label><input type="radio" name="status" value="active"> فعال</label>
+        <label><input type="radio" name="status" value="done"> انجام‌شده</label>
       </div>
       <div class="filter-section">
-        <h3>Sort</h3>
+        <h3>🔀 مرتب‌سازی</h3>
         <select id="sortSelect">
           <option value="date-asc">📅 تاریخ (نزدیک‌ترین)</option>
           <option value="date-desc">📅 تاریخ (دورترین)</option>
@@ -55,64 +68,74 @@
         </select>
       </div>
       <div class="filter-section">
-        <h3>Stats</h3>
+        <h3>📊 آمار</h3>
         <div class="stats" id="stats"></div>
       </div>
     </aside>
 
     <section class="content">
       <div class="bulk-bar" id="bulkBar" hidden>
-        <span id="selectedCount">0 selected</span>
-        <button class="btn btn-sm" id="bulkDone">Mark Done</button>
-        <button class="btn btn-sm" id="bulkUndone">Mark Active</button>
-        <button class="btn btn-sm btn-danger" id="bulkDelete">Delete</button>
-        <button class="btn btn-sm" id="bulkClear">Clear</button>
+        <span id="selectedCount">۰ انتخاب‌شده</span>
+        <div class="bulk-actions">
+          <button class="btn btn-sm" id="bulkDone"><span class="icon">✓</span> انجام‌شده</button>
+          <button class="btn btn-sm" id="bulkUndone"><span class="icon">↺</span> فعال</button>
+          <button class="btn btn-sm btn-danger" id="bulkDelete"><span class="icon">🗑</span> حذف</button>
+          <button class="btn btn-sm" id="bulkClear"><span class="icon">✕</span> پاک‌کردن</button>
+        </div>
       </div>
 
       <div class="list" id="list"></div>
-      <div class="empty" id="empty" hidden>No works yet. Click "Add Work" to start.</div>
+      <div class="empty" id="empty" hidden>
+        <div class="empty-icon">🗂️</div>
+        <div class="empty-text">هنوز کاری اضافه نشده است.</div>
+        <div class="empty-hint">برای شروع، روی «افزودن کار» کلیک کنید.</div>
+      </div>
     </section>
   </main>
 
   <div class="modal" id="modal" hidden>
     <div class="modal-content">
       <div class="modal-header">
-        <h2 id="modalTitle">New Work</h2>
-        <button class="icon-btn" id="modalClose">✕</button>
+        <h2 id="modalTitle">کار جدید</h2>
+        <button class="icon-btn" id="modalClose" title="بستن">✕</button>
       </div>
       <form id="itemForm" class="modal-body" onsubmit="return false;">
         <input type="hidden" id="itemId">
         <label>
-          <span>Title *</span>
-          <input type="text" id="itemTitle" required>
+          <span>عنوان <span class="req">*</span></span>
+          <input type="text" id="itemTitle" required placeholder="عنوان کار را وارد کنید">
         </label>
         <label>
-          <span>Description</span>
-          <textarea id="itemDesc" rows="3"></textarea>
+          <span>توضیحات</span>
+          <textarea id="itemDesc" rows="3" placeholder="توضیحات اختیاری…"></textarea>
         </label>
         <div class="grid-2">
           <label>
-            <span>Category</span>
-            <input type="text" id="itemCategory" placeholder="e.g. essay, design, research">
+            <span>🏷️ دسته‌بندی</span>
+            <input type="text" id="itemCategory" placeholder="مثلاً: پژوهش، ادبی، فنی">
           </label>
           <label>
-            <span>Date (Gregorian picker)</span>
+            <span>📅 تاریخ</span>
             <input type="date" id="itemDate">
             <small id="itemDatePreview" class="date-preview"></small>
           </label>
         </div>
         <label>
-          <span>Tags (comma separated)</span>
-          <input type="text" id="itemTags" placeholder="tag1, tag2">
+          <span>🔖 برچسب‌ها</span>
+          <input type="text" id="itemTags" placeholder="با کاما جدا کنید: برچسب۱، برچسب۲">
+        </label>
+        <label>
+          <span>🔗 پیوندها <small class="help-inline">(هر خط یک پیوند — فرمت: <code>عنوان | آدرس</code> یا فقط <code>آدرس</code>)</small></span>
+          <textarea id="itemLinks" rows="3" placeholder="مثال:&#10;سایت رسمی | https://example.com&#10;https://another.example.com"></textarea>
         </label>
         <label class="checkbox">
           <input type="checkbox" id="itemDone">
-          <span>Done</span>
+          <span>این کار انجام شده است</span>
         </label>
       </form>
       <div class="modal-footer">
-        <button class="btn" id="modalCancel">Cancel</button>
-        <button class="btn btn-primary" id="modalSave">Save</button>
+        <button class="btn" id="modalCancel">انصراف</button>
+        <button class="btn btn-primary" id="modalSave"><span class="icon">💾</span> ذخیره</button>
       </div>
     </div>
   </div>
@@ -120,40 +143,40 @@
   <div class="modal" id="settingsModal" hidden>
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Settings &amp; Sync</h2>
-        <button class="icon-btn" id="settingsClose">✕</button>
+        <h2>⚙️ تنظیمات و همگام‌سازی</h2>
+        <button class="icon-btn" id="settingsClose" title="بستن">✕</button>
       </div>
       <div class="modal-body">
         <div class="setup-callout">
           <div class="setup-callout-text">
-            <strong>First time?</strong>
-            <span>Open the setup guide to create your token and gist in 3 minutes.</span>
+            <strong>🔑 اولین بار است؟</strong>
+            <span>راهنمای راه‌اندازی را باز کنید تا در ۳ دقیقه توکن و Gist بسازید.</span>
           </div>
-          <button class="btn btn-sm btn-primary" id="openGuideBtn">🔑 Setup Guide</button>
+          <button class="btn btn-sm btn-primary" id="openGuideBtn">📖 راهنمای راه‌اندازی</button>
         </div>
 
-        <h3>Cloud Sync (GitHub Gist)</h3>
-        <p class="help">Sync works across devices via a private GitHub Gist. <strong>Works in Iran — no VPN required.</strong></p>
+        <h3>☁️ همگام‌سازی ابری (GitHub Gist)</h3>
+        <p class="help">کارها را از طریق یک Gist خصوصی در GitHub بین دستگاه‌ها همگام کنید. <strong>در ایران بدون فیلترشکن کار می‌کند.</strong></p>
 
         <label>
-          <span>Gist ID or URL</span>
-          <input type="text" id="syncUrl" placeholder="a1b2c3d4e5f6  or  https://gist.github.com/user/a1b2c3d4e5f6">
+          <span>شناسه یا آدرس Gist</span>
+          <input type="text" id="syncUrl" placeholder="a1b2c3d4e5f6  یا  https://gist.github.com/user/a1b2c3d4e5f6" dir="ltr">
         </label>
         <label>
-          <span>GitHub Token</span>
-          <input type="password" id="syncKey" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+          <span>توکن GitHub</span>
+          <input type="password" id="syncKey" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" dir="ltr">
         </label>
 
         <div class="row-actions">
-          <button class="btn" id="testConnBtn">✓ Test Connection</button>
-          <button class="btn" id="syncNowBtn">☁️ Sync Now</button>
-          <button class="btn" id="openGuideBtn2">🔑 How to get a token</button>
+          <button class="btn" id="testConnBtn"><span class="icon">🔌</span> آزمایش اتصال</button>
+          <button class="btn btn-primary" id="syncNowBtn"><span class="icon">☁️</span> همگام‌سازی الان</button>
+          <button class="btn" id="openGuideBtn2"><span class="icon">📖</span> راهنما</button>
         </div>
 
         <p class="status-text" id="syncStatusText"></p>
         <hr>
-        <h3>Data</h3>
-        <button class="btn btn-danger" id="clearAllBtn">Clear All Data</button>
+        <h3>🗄️ داده‌ها</h3>
+        <button class="btn btn-danger" id="clearAllBtn"><span class="icon">⚠️</span> پاک‌کردن همه داده‌ها</button>
       </div>
     </div>
   </div>
@@ -161,58 +184,58 @@
   <div class="modal" id="guideModal" hidden>
     <div class="modal-content">
       <div class="modal-header">
-        <h2>🔑 GitHub Gist Sync Setup</h2>
-        <button class="icon-btn" id="guideClose">✕</button>
+        <h2>📖 راه‌اندازی همگام‌سازی</h2>
+        <button class="icon-btn" id="guideClose" title="بستن">✕</button>
       </div>
       <div class="modal-body guide-body">
-        <p class="guide-intro">Follow these 5 steps once per GitHub account. Every device will then share the same data.</p>
+        <p class="guide-intro">این ۵ مرحله را یک‌بار برای هر حساب GitHub انجام دهید. سپس همه دستگاه‌ها داده‌ی یکسان خواهند داشت.</p>
 
         <div class="guide-step">
-          <div class="step-num">1</div>
+          <div class="step-num">۱</div>
           <div class="step-body">
-            <h3>Create a personal access token</h3>
-            <p>Only the <code>gist</code> scope is needed. It's free and takes ~30 seconds.</p>
-            <a class="btn btn-sm btn-primary" href="https://github.com/settings/tokens/new?scopes=gist&description=Works+Sync" target="_blank" rel="noopener">Open GitHub token page →</a>
+            <h3>ساخت توکن دسترسی شخصی</h3>
+            <p>فقط دسترسی <code>gist</code> لازم است. رایگان و حدود ۳۰ ثانیه طول می‌کشد.</p>
+            <a class="btn btn-sm btn-primary" href="https://github.com/settings/tokens/new?scopes=gist&description=Works+Sync" target="_blank" rel="noopener">باز کردن صفحه ساخت توکن در GitHub ↗</a>
           </div>
         </div>
 
         <div class="guide-step">
-          <div class="step-num">2</div>
+          <div class="step-num">۲</div>
           <div class="step-body">
-            <h3>Copy the token</h3>
-            <p>It looks like <code>ghp_xxxxxxxxxxxxxxxxxxxx</code>. Treat it like a password.</p>
+            <h3>کپی کردن توکن</h3>
+            <p>شبیه این است: <code dir="ltr">ghp_xxxxxxxxxxxxxxxxxxxx</code> — مثل رمز عبور از آن محافظت کنید.</p>
           </div>
         </div>
 
         <div class="guide-step">
-          <div class="step-num">3</div>
+          <div class="step-num">۳</div>
           <div class="step-body">
-            <h3>Create a secret gist</h3>
-            <p>Name the file <code>works.json</code> and set content to <code>[]</code> (empty array). Click <strong>Create secret gist</strong>.</p>
-            <a class="btn btn-sm" href="https://gist.github.com/" target="_blank" rel="noopener">Open GitHub Gist →</a>
+            <h3>ساخت Gist مخفی</h3>
+            <p>نام فایل را <code dir="ltr">works.json</code> بگذارید و محتوای آن را <code dir="ltr">[]</code> (آرایه خالی) قرار دهید. روی <strong>Create secret gist</strong> کلیک کنید.</p>
+            <a class="btn btn-sm" href="https://gist.github.com/" target="_blank" rel="noopener">باز کردن GitHub Gist ↗</a>
           </div>
         </div>
 
         <div class="guide-step">
-          <div class="step-num">4</div>
+          <div class="step-num">۴</div>
           <div class="step-body">
-            <h3>Copy the Gist ID</h3>
-            <p>From the gist URL: <code>gist.github.com/YOUR-USER/<mark>GIST-ID</mark></code></p>
-            <p class="help">You can also paste the whole URL into the app — we'll extract the ID automatically.</p>
+            <h3>کپی کردن شناسه Gist</h3>
+            <p>از آدرس Gist: <code dir="ltr">gist.github.com/USER/<mark>GIST-ID</mark></code></p>
+            <p class="help">می‌توانید کل آدرس را در برنامه جای‌گذاری کنید — شناسه به‌طور خودکار استخراج می‌شود.</p>
           </div>
         </div>
 
         <div class="guide-step">
-          <div class="step-num">5</div>
+          <div class="step-num">۵</div>
           <div class="step-body">
-            <h3>Paste &amp; test</h3>
-            <p>Back in <strong>Settings</strong>: paste the Gist ID and token, then click <strong>Test Connection</strong>. If it passes, click <strong>Sync Now</strong>. Done.</p>
+            <h3>جای‌گذاری و آزمایش</h3>
+            <p>به <strong>تنظیمات</strong> برگردید: شناسه Gist و توکن را جای‌گذاری کنید، سپس روی <strong>آزمایش اتصال</strong> بزنید. اگر موفق بود، <strong>همگام‌سازی الان</strong> را بزنید. تمام.</p>
           </div>
         </div>
 
         <div class="setup-callout tip">
-          <strong>💡 Privacy tip:</strong>
-          <span>A "secret" gist isn't listed in search, but anyone with the URL can read it. Don't put passwords or secrets inside your works.</span>
+          <strong>💡 نکته امنیتی:</strong>
+          <span>Gist «مخفی» در نتایج جستجو نمایش داده نمی‌شود، اما هرکس آدرس را داشته باشد می‌تواند آن را ببیند. رمز یا اطلاعات حساس در کارها قرار ندهید.</span>
         </div>
       </div>
     </div>

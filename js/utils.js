@@ -6,11 +6,6 @@
     'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
   ];
 
-  /**
-   * Gregorian → Jalali (Shamsi)
-   * Based on the well-known jalaali-js algorithm.
-   * Returns [jy, jm, jd].
-   */
   function gregorianToJalali(gy, gm, gd) {
     const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
     const gy2 = (gm > 2) ? (gy + 1) : gy;
@@ -36,10 +31,6 @@
     return [jy, jm, jd];
   }
 
-  /**
-   * Jalali (Shamsi) → Gregorian
-   * Returns [gy, gm, gd].
-   */
   function jalaliToGregorian(jy, jm, jd) {
     const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
     const jy2 = jy - 979, jm2 = jm - 1, jd2 = jd - 1;
@@ -79,6 +70,42 @@
 
   function pad2(n) { return n < 10 ? '0' + n : '' + n; }
 
+  /**
+   * Parse a raw links string (one link per line).
+   * Supported formats:
+   *   https://example.com
+   *   Label | https://example.com
+   * Returns an array of { label, url }.
+   */
+  function parseLinks(raw) {
+    if (!raw) return [];
+    return String(raw)
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean)
+      .map(line => {
+        let label = '';
+        let url = '';
+        if (line.includes('|')) {
+          const parts = line.split('|');
+          label = parts[0].trim();
+          url = parts.slice(1).join('|').trim();
+        } else {
+          url = line;
+        }
+        // Ensure url has a scheme
+        if (url && !/^[a-z][a-z0-9+.-]*:\/\//i.test(url)) {
+          url = 'https://' + url;
+        }
+        if (!label) {
+          try { label = new URL(url).hostname.replace(/^www\./, ''); }
+          catch (e) { label = url; }
+        }
+        return { label: label, url: url };
+      })
+      .filter(l => l.url);
+  }
+
   const Utils = {
     uid() {
       return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
@@ -103,14 +130,10 @@
     },
 
     toPersianDigits,
-
     gregorianToJalali,
     jalaliToGregorian,
+    parseLinks,
 
-    /**
-     * Parse a stored ISO date (YYYY-MM-DD) into a Jalali tuple [jy, jm, jd].
-     * Returns null if the input isn't a valid ISO date.
-     */
     isoToJalali(iso) {
       if (!iso) return null;
       const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -118,18 +141,11 @@
       return gregorianToJalali(+m[1], +m[2], +m[3]);
     },
 
-    /**
-     * Build a YYYY-MM-DD ISO string from a Jalali date tuple.
-     */
     jalaliToIso(jy, jm, jd) {
       const [gy, gm, gd] = jalaliToGregorian(jy, jm, jd);
       return gy + '-' + pad2(gm) + '-' + pad2(gd);
     },
 
-    /**
-     * Human-friendly Jalali date, e.g. "۱۵ مهر ۱۴۰۵".
-     * Uses Persian digits and month names.
-     */
     formatJalaliDate(iso) {
       const j = this.isoToJalali(iso);
       if (!j) return '';
@@ -137,18 +153,12 @@
       return toPersianDigits(jd) + ' ' + PERSIAN_MONTHS[jm - 1] + ' ' + toPersianDigits(jy);
     },
 
-    /**
-     * Short Jalali date with numeric form, e.g. "۱۴۰۵/۰۷/۱۵".
-     */
     formatJalaliShort(iso) {
       const j = this.isoToJalali(iso);
       if (!j) return '';
       return toPersianDigits(j[0] + '/' + pad2(j[1]) + '/' + pad2(j[2]));
     },
 
-    /**
-     * Today's date as Jalali human-readable form.
-     */
     todayJalali() {
       const now = new Date();
       const [jy, jm, jd] = gregorianToJalali(now.getFullYear(), now.getMonth() + 1, now.getDate());

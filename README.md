@@ -1,129 +1,137 @@
-# Works
+# 🧩 کارها (Works)
 
-A single-page application for managing works with live editing, bulk actions, JSON import/export, localStorage persistence, **Jalali (Shamsi) date display**, and optional cross-device cloud sync via **GitHub Gist** — fully accessible from Iran without a VPN.
+یک برنامه‌ی تک‌صفحه‌ای فارسی برای مدیریت کارها با ویرایش زنده، پیوندها، تاریخ شمسی، برچسب‌ها، و همگام‌سازی ابری اختیاری از طریق **GitHub Gist** — کاملاً قابل دسترس از ایران بدون فیلترشکن.
 
-## Features
+## ✨ امکانات
 
-- **Live editing** — click ✎ to edit any work in a modal
-- **Jalali (Shamsi) dates** — stored as ISO internally, displayed in Persian calendar (۱۵ مهر ۱۴۰۵)
-- **Multiple sort modes** — date ascending/descending, updated time, title
-- **Add / delete / bulk actions** — multi-select, mark done/active, delete many
-- **Filter & search** — by free text, category, status, and even Jalali date text
-- **Import / Export JSON** — full data portability
-- **LocalStorage persistence** — everything saved automatically
-- **Cross-tab sync** — BroadcastChannel + storage events keep tabs in sync
-- **Cross-device cloud sync** — via a private GitHub Gist (no VPN needed in Iran)
-- **In-app setup helper** — guided token + gist creation with one click
-- **PWA-ready** — service worker + manifest for offline use
-- **GitHub Pages deployment** — automatic via Actions
+- **رابط کاربری کامل فارسی** با چیدمان راست‌به‌چپ (RTL) و فونت وزیرمتن
+- **ویرایش زنده** — با کلیک روی ✎ هر کار را ویرایش کنید
+- **تاریخ شمسی** — ذخیره به‌صورت ISO، نمایش به‌صورت «۱۵ مهر ۱۴۰۵»
+- **پیوندها** — هر کار می‌تواند چندین پیوند داشته باشد (نمایش به‌صورت چیپ کلیک‌پذیر)
+- **برچسب‌ها** — افزودن چند برچسب به هر کار
+- **دسته‌بندی و فیلتر** — جستجوی آزاد، دسته‌بندی، وضعیت
+- **مرتب‌سازی چندگانه** — تاریخ، آخرین ویرایش، الفبا
+- **عملیات گروهی** — انتخاب چندگانه، علامت‌گذاری انجام‌شده/فعال، حذف گروهی
+- **ورود/خروجی JSON** — قابلیت انتقال کامل داده‌ها
+- **ذخیره‌سازی محلی** — localStorage با همگام‌سازی خودکار بین تب‌ها
+- **همگام‌سازی ابری** — از طریق Gist خصوصی GitHub (بدون فیلترشکن در ایران)
+- **راهنمای درون‌برنامه‌ای** — ساخت توکن و Gist با یک کلیک
+- **PWA** — سرویس‌ورکر و مانیفست برای استفاده آفلاین
+- **استقرار خودکار** — از طریق GitHub Actions روی GitHub Pages
 
-## Getting Started
+## 🚀 شروع سریع
 
-### Local development
+### اجرای محلی
 
-Just open `index.html` in a browser, or run a simple static server:
+فایل `index.html` را در مرورگر باز کنید، یا با یک سرور ساده اجرا کنید:
 
 ```bash
 python -m http.server 8000
 ```
 
-Then visit `http://localhost:8000`.
+سپس `http://localhost:8000` را باز کنید.
 
-### Deployment
+### استقرار
 
-Push to `main` — the GitHub Actions workflow deploys to GitHub Pages automatically.
+به شاخه‌ی `main` پوش کنید — گردش‌کار GitHub Actions به‌صورت خودکار روی GitHub Pages مستقر می‌کند.
 
-Enable Pages once in your repo settings: **Settings → Pages → Source: GitHub Actions**.
+در تنظیمات مخزن، یک‌بار Pages را فعال کنید: **Settings → Pages → Source: GitHub Actions**.
 
-## Dates: Jalali storage & display
+## 📅 تاریخ شمسی
 
-- **Storage format:** every work's `date` field is stored as ISO Gregorian `YYYY-MM-DD`, so it's portable, sortable, and sync-safe.
-- **Display format:** the UI converts to Jalali using `Utils.formatJalaliDate()` → `۱۵ مهر ۱۴۰۵`, with Persian digits and month names.
-- **Editor:** the modal uses a native `<input type="date">` (for a reliable picker) and shows a live Jalali preview under it like `📅 ۱۵ مهر ۱۴۰۵ (۱۴۰۵/۰۷/۱۵)`.
-- **Search:** matches both the raw ISO date and the Jalali text, so "مهر" or "1405" both work.
-- **Sorting:** uses the underlying ISO date for correct chronological ordering.
+- **ذخیره:** فیلد `date` هر کار به‌صورت ISO میلادی (`YYYY-MM-DD`) ذخیره می‌شود.
+- **نمایش:** رابط کاربری به تاریخ شمسی تبدیل می‌کند → «۱۵ مهر ۱۴۰۵» با اعداد فارسی.
+- **ویرایشگر:** از `<input type="date">` بومی برای انتخابگر استفاده می‌کند و پیش‌نمایش شمسی زیر آن نشان می‌دهد.
+- **جستجو:** هم ISO و هم شمسی را می‌جوید.
+- **مرتب‌سازی:** بر اساس ISO برای ترتیب زمانی صحیح.
 
-The Jalali algorithm is implemented from scratch in `js/utils.js` — no external dependencies.
+الگوریتم تبدیل شمسی در `js/utils.js` بدون وابستگی خارجی پیاده‌سازی شده است.
 
-## Cloud Sync via GitHub Gist
+## 🔗 پیوندها
 
-Works syncs across devices through a **private GitHub Gist**. It uses only the `gist` scope on a personal access token, works fine from Iran without a VPN, and is free.
+هر کار می‌تواند چندین پیوند داشته باشد. در فرم ویرایش، هر پیوند در یک خط وارد می‌شود:
 
-### Quick start
+```
+سایت رسمی | https://example.com
+https://another.example.com
+```
 
-1. Open the app → click **⚙️** → **🔑 Setup Guide**
-2. The guide walks you through:
-   - Creating a **personal access token** (only the `gist` scope)
-   - Creating a **secret gist** with a `works.json` file containing `[]`
-   - Copying the **Gist ID** from the URL
-3. Paste both values into Settings → **Test Connection** → **Sync Now**
-4. Repeat on every device with the same Gist ID and token
+- اگر برچسب مشخص نکنید، دامنه به‌عنوان برچسب استفاده می‌شود.
+- پیوندها به‌صورت چیپ‌های کلیک‌پذیر در کارت کار نمایش داده می‌شوند.
 
-### What the app does
+## ☁️ همگام‌سازی ابری از طریق GitHub Gist
 
-- **On demand** (Sync button) or **every 60 s** — pulls remote, merges, pushes
-- **Merge strategy:** last-write-wins by `updatedAt`, union of all item IDs
-- **Nothing leaves your device** unless you configure a Gist ID and token
+برنامه از یک **Gist خصوصی GitHub** برای همگام‌سازی بین دستگاه‌ها استفاده می‌کند.
 
-### Data model
+### راه‌اندازی سریع
+
+1. برنامه را باز کنید → **⚙️** → **📖 راهنمای راه‌اندازی**
+2. راهنما شما را در ۵ مرحله همراهی می‌کند:
+   - ساخت **توکن دسترسی شخصی** (فقط دسترسی `gist`)
+   - ساخت **Gist مخفی** با فایل `works.json` و محتوای `[]`
+   - کپی کردن **شناسه Gist** از آدرس
+3. مقادیر را در تنظیمات جای‌گذاری کنید → **آزمایش اتصال** → **همگام‌سازی الان**
+4. روی هر دستگاه دیگر، با همان شناسه و توکن تکرار کنید
+
+### رفتار
+
+- **درخواستی** (دکمه همگام‌سازی) یا **هر ۶۰ ثانیه**
+- **ادغام:** آخرین ویرایش برنده (last-write-wins) بر اساس `updatedAt`
+- **هیچ داده‌ای** از دستگاه شما خارج نمی‌شود مگر Gist را پیکربندی کنید
+
+## 🗂️ مدل داده
 
 ```json
 {
   "id": "id_...",
-  "title": "Work title",
-  "description": "Optional notes",
-  "category": "essay",
+  "title": "عنوان کار",
+  "description": "توضیحات اختیاری",
+  "category": "پژوهش",
   "date": "2026-10-07",
-  "tags": ["urgent", "review"],
+  "tags": ["فوری", "بررسی"],
+  "links": [
+    { "label": "سایت رسمی", "url": "https://example.com" }
+  ],
   "done": false,
   "createdAt": 1700000000000,
   "updatedAt": 1700000000000
 }
 ```
 
-### Endpoint format accepted
+## ⌨️ میان‌برهای صفحه‌کلید
 
-Both forms work in the **Gist ID or URL** field:
+| کلیدها | عمل |
+|--------|-----|
+| `Ctrl/Cmd + K` | فوکوس روی جستجو |
+| `Ctrl/Cmd + N` | کار جدید |
+| `Esc` | بستن پنجره بازشو |
 
-- Raw ID: `a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4`
-- Full URL: `https://gist.github.com/your-user/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4`
-
-The app extracts the ID automatically.
-
-## Keyboard Shortcuts
-
-| Keys | Action |
-|------|--------|
-| `Ctrl/Cmd + K` | Focus search |
-| `Ctrl/Cmd + N` | New work |
-| `Esc` | Close modal |
-
-## File Structure
+## 📁 ساختار فایل‌ها
 
 ```
-index.html         main page + setup guide modal + sort dropdown
-styles.css         all styles
-js/utils.js        helpers + Jalali <-> Gregorian conversion
-js/storage.js      localStorage store with change events + cross-tab
-js/sync.js         GitHub Gist sync client
-js/ui.js           DOM rendering + sorting logic
-js/app.js          orchestration + service worker registration
-sw.js              service worker (offline cache)
-manifest.json      PWA manifest
+index.html         صفحه اصلی + راهنمای راه‌اندازی
+styles.css         همه استایل‌ها (RTL + فونت وزیرمتن)
+js/utils.js        توابع کمکی + تبدیل تاریخ شمسی + پارس پیوندها
+js/storage.js      ذخیره‌سازی localStorage + رویداد تغییر + همگام‌سازی بین تب‌ها
+js/sync.js         کلاینت همگام‌سازی GitHub Gist
+js/ui.js           رندر DOM + منطق مرتب‌سازی
+js/app.js          هماهنگ‌کننده + ثبت سرویس‌ورکر
+sw.js              سرویس‌ورکر (کش آفلاین)
+manifest.json      مانیفست PWA
 .github/workflows/deploy.yml
 README.md
 ```
 
-## Notes on the `[hidden]` fix
+## 🛠️ نکته درباره `[hidden]`
 
-`styles.css` starts with:
+در ابتدای `styles.css` آمده:
 
 ```css
 [hidden] { display: none !important; }
 ```
 
-This ensures the `hidden` attribute always wins over any component `display` rule (e.g. `.modal { display: flex }`). Without this line, `el.hidden = true` in JS has no effect because author CSS beats the browser's default `[hidden] { display: none }`.
+این تضمین می‌کند ویژگی `hidden` همیشه بر قواعد `display` غلبه کند (مثلاً `.modal { display: flex }`). بدون این خط، `el.hidden = true` در جاوااسکریپت اثری ندارد چون CSS نویسنده بر `[hidden]` پیش‌فرض مرورگر اولویت دارد.
 
-## License
+## 📄 مجوز
 
 MIT

@@ -1,7 +1,9 @@
 {
-  "name": "Works",
-  "short_name": "Works",
-  "description": "Live editing manager for works with local-first storage, Jalali dates, and optional cloud sync via GitHub Gist",
+  "name": "کارها",
+  "short_name": "کارها",
+  "description": "مدیریت کارها با ویرایش زنده، پیوندها، تاریخ شمسی و همگام‌سازی ابری از طریق GitHub Gist",
+  "lang": "fa",
+  "dir": "rtl",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

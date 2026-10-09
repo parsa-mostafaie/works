@@ -50,22 +50,22 @@
     async testConnection() {
       const gistId = this._gistId();
       const token = this._token();
-      if (!gistId) throw new Error('Gist ID is required');
-      if (!token) throw new Error('GitHub token is required');
+      if (!gistId) throw new Error('شناسه Gist الزامی است');
+      if (!token) throw new Error('توکن GitHub الزامی است');
 
-      this._setStatus('syncing', 'Testing connection...');
+      this._setStatus('syncing', 'در حال آزمایش اتصال…');
       const res = await fetch(GIST_API + '/' + gistId, {
         headers: this._headers()
       });
 
-      if (res.status === 401) throw new Error('Invalid token (401)');
-      if (res.status === 403) throw new Error('Token lacks gist scope (403)');
-      if (res.status === 404) throw new Error('Gist not found (404) — check the ID');
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      if (res.status === 401) throw new Error('توکن نامعتبر است (۴۰۱)');
+      if (res.status === 403) throw new Error('توکن دسترسی gist ندارد (۴۰۳)');
+      if (res.status === 404) throw new Error('Gist پیدا نشد (۴۰۴) — شناسه را بررسی کنید');
+      if (!res.ok) throw new Error('خطای HTTP ' + res.status);
 
       const data = await res.json();
       this._lastGistId = data.id || gistId;
-      this._setStatus('idle', 'Connection OK');
+      this._setStatus('idle', 'اتصال برقرار است');
 
       return {
         id: data.id || gistId,
@@ -78,13 +78,13 @@
 
     async pull() {
       const gistId = this._gistId();
-      if (!gistId) throw new Error('No Gist ID configured');
-      this._setStatus('syncing', 'Pulling...');
+      if (!gistId) throw new Error('شناسه Gist تنظیم نشده');
+      this._setStatus('syncing', 'در حال دریافت…');
 
       const res = await fetch(GIST_API + '/' + gistId, {
         headers: this._headers()
       });
-      if (!res.ok) throw new Error('Pull failed: ' + res.status);
+      if (!res.ok) throw new Error('دریافت ناموفق: ' + res.status);
 
       const data = await res.json();
       const file = data.files && data.files[GIST_FILENAME];
@@ -97,14 +97,14 @@
         if (parsed && Array.isArray(parsed.items)) return parsed.items;
         return [];
       } catch (e) {
-        throw new Error('Gist content is not valid JSON');
+        throw new Error('محتوای Gist JSON معتبر نیست');
       }
     }
 
     async push() {
       const gistId = this._gistId();
-      if (!gistId) throw new Error('No Gist ID configured');
-      this._setStatus('syncing', 'Pushing...');
+      if (!gistId) throw new Error('شناسه Gist تنظیم نشده');
+      this._setStatus('syncing', 'در حال ارسال…');
 
       const body = { files: {} };
       body.files[GIST_FILENAME] = {
@@ -116,7 +116,7 @@
         headers: this._headers({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(body)
       });
-      if (!res.ok) throw new Error('Push failed: ' + res.status);
+      if (!res.ok) throw new Error('ارسال ناموفق: ' + res.status);
       return true;
     }
 
@@ -125,7 +125,8 @@
         const remote = await this.pull();
         this.store.mergeAll(remote);
         await this.push();
-        this._setStatus('idle', 'Synced ' + new Date().toLocaleTimeString());
+        const t = new Date().toLocaleTimeString('fa-IR');
+        this._setStatus('idle', 'همگام‌سازی‌شده در ' + t);
         return true;
       } catch (e) {
         this._setStatus('error', e.message);

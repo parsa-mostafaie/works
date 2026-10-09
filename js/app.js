@@ -69,9 +69,9 @@
       document.getElementById('openGuideBtn2').onclick = () => this.openGuide();
 
       document.getElementById('clearAllBtn').onclick = () => {
-        if (confirm('Delete ALL works? This cannot be undone.')) {
+        if (confirm('همه کارها حذف شوند؟ این عمل قابل بازگشت نیست.')) {
           this.store.clearAll();
-          Utils.toast('All data cleared');
+          Utils.toast('همه داده‌ها پاک شد');
         }
       };
 
@@ -102,7 +102,8 @@
         this.ui._render();
       };
       document.getElementById('bulkDelete').onclick = () => {
-        if (confirm('Delete ' + this.ui.selected.size + ' work(s)?')) {
+        const n = Utils.toPersianDigits(this.ui.selected.size);
+        if (confirm(n + ' کار حذف شوند؟')) {
           this.store.removeMany(Array.from(this.ui.selected));
           this.ui.selected.clear();
         }
@@ -122,10 +123,11 @@
         const dot = document.getElementById('syncDot');
         const text = document.getElementById('syncText');
         dot.classList.remove('syncing', 'error');
-        if (s === 'syncing') { dot.classList.add('syncing'); text.textContent = msg || 'Syncing...'; }
-        else if (s === 'error') { dot.classList.add('error'); text.textContent = 'Sync error'; }
-        else { text.textContent = msg || 'Ready'; }
-        document.getElementById('syncStatusText').textContent = msg || '';
+        if (s === 'syncing') { dot.classList.add('syncing'); text.textContent = msg || 'در حال همگام‌سازی…'; }
+        else if (s === 'error') { dot.classList.add('error'); text.textContent = 'خطای همگام‌سازی'; }
+        else { text.textContent = msg || 'آماده'; }
+        const st = document.getElementById('syncStatusText');
+        if (st) st.textContent = msg || '';
       });
     }
 
@@ -158,7 +160,7 @@
       const text = document.getElementById('syncText');
       if (!ok) {
         dot.classList.remove('syncing', 'error');
-        text.textContent = 'Local only';
+        text.textContent = 'فقط محلی';
       }
     }
 
@@ -180,14 +182,17 @@
     openEditor(id) {
       const modal = document.getElementById('modal');
       const editing = !!id;
-      document.getElementById('modalTitle').textContent = editing ? 'Edit Work' : 'New Work';
+      document.getElementById('modalTitle').textContent = editing ? 'ویرایش کار' : 'کار جدید';
       const item = editing ? this.store.get(id) : null;
       document.getElementById('itemId').value = id || '';
       document.getElementById('itemTitle').value = item ? item.title : '';
       document.getElementById('itemDesc').value = item ? (item.description || '') : '';
       document.getElementById('itemCategory').value = item ? (item.category || '') : '';
       document.getElementById('itemDate').value = item ? (item.date || '') : '';
-      document.getElementById('itemTags').value = item ? (item.tags || []).join(', ') : '';
+      document.getElementById('itemTags').value = item ? (item.tags || []).join('، ') : '';
+      document.getElementById('itemLinks').value = item
+        ? (item.links || []).map(l => l.label && l.label !== l.url ? (l.label + ' | ' + l.url) : l.url).join('\n')
+        : '';
       document.getElementById('itemDone').checked = item ? !!item.done : false;
       this._updateDatePreview();
       modal.hidden = false;
@@ -197,20 +202,30 @@
     saveEditor() {
       const id = document.getElementById('itemId').value;
       const title = document.getElementById('itemTitle').value.trim();
-      if (!title) { Utils.toast('Title is required'); return; }
+      if (!title) { Utils.toast('عنوان الزامی است'); return; }
+
+      const tagsRaw = document.getElementById('itemTags').value;
+      const tags = tagsRaw
+        .split(/[,،]/)
+        .map(t => t.trim())
+        .filter(Boolean);
+
+      const linksRaw = document.getElementById('itemLinks').value;
+      const links = Utils.parseLinks(linksRaw);
+
       const data = {
         title: title,
         description: document.getElementById('itemDesc').value.trim(),
         category: document.getElementById('itemCategory').value.trim(),
         date: document.getElementById('itemDate').value,
-        tags: document.getElementById('itemTags').value
-          .split(',').map(t => t.trim()).filter(Boolean),
+        tags: tags,
+        links: links,
         done: document.getElementById('itemDone').checked
       };
       if (id) this.store.update(id, data);
       else this.store.add(data);
       document.getElementById('modal').hidden = true;
-      Utils.toast(id ? 'Updated' : 'Added');
+      Utils.toast(id ? 'ویرایش شد' : 'اضافه شد');
     }
 
     openSettings() {
@@ -218,8 +233,8 @@
       document.getElementById('syncUrl').value = s.syncUrl || '';
       document.getElementById('syncKey').value = s.syncKey || '';
       document.getElementById('syncStatusText').textContent = this.sync.hasConfig()
-        ? 'Ready to sync.'
-        : 'Add a Gist ID and token to enable cloud sync.';
+        ? 'آماده همگام‌سازی.'
+        : 'برای فعال‌سازی همگام‌سازی، شناسه Gist و توکن را وارد کنید.';
       document.getElementById('settingsModal').hidden = false;
     }
 
@@ -234,7 +249,7 @@
         items: this.store.list()
       };
       Utils.download('works-' + Date.now() + '.json', JSON.stringify(data, null, 2));
-      Utils.toast('Exported');
+      Utils.toast('خروجی گرفته شد');
     }
 
     async import(e) {
@@ -244,17 +259,18 @@
         const text = await file.text();
         const parsed = JSON.parse(text);
         const items = Array.isArray(parsed) ? parsed : (parsed.items || []);
-        if (!Array.isArray(items)) throw new Error('Invalid format');
-        const mode = confirm(
-          'Import ' + items.length + ' work(s).\n\n' +
-          'OK = Merge with existing (recommended)\n' +
-          'Cancel = Replace ALL existing data'
-        ) ? 'merge' : 'replace';
-        if (mode === 'merge') this.store.mergeAll(items);
+        if (!Array.isArray(items)) throw new Error('فرمت فایل نامعتبر است');
+        const n = Utils.toPersianDigits(items.length);
+        const merge = confirm(
+          'وارد کردن ' + n + ' کار.\n\n' +
+          'تأیید = ادغام با داده‌های موجود (پیشنهادی)\n' +
+          'لغو = جایگزینی کامل داده‌های موجود'
+        );
+        if (merge) this.store.mergeAll(items);
         else this.store.replaceAll(items);
-        Utils.toast('Imported ' + items.length + ' work(s)');
+        Utils.toast(n + ' کار وارد شد');
       } catch (err) {
-        Utils.toast('Import failed: ' + err.message);
+        Utils.toast('خطا در ورود داده: ' + err.message);
       }
       e.target.value = '';
     }
@@ -262,28 +278,28 @@
     async testConnection() {
       try {
         const info = await this.sync.testConnection();
-        const files = info.files.length ? info.files.join(', ') : 'none';
+        const files = info.files.length ? info.files.join(', ') : 'خالی';
         document.getElementById('syncStatusText').textContent =
-          '✓ Connected to gist ' + String(info.id).slice(0, 8) + '… | files: ' + files +
-          (info.hasWorksFile ? '' : ' (works.json will be created on first push)');
-        Utils.toast('Connection OK');
+          '✓ متصل به Gist ' + String(info.id).slice(0, 8) + '… | فایل‌ها: ' + files +
+          (info.hasWorksFile ? '' : ' (works.json در اولین ارسال ساخته می‌شود)');
+        Utils.toast('اتصال برقرار است');
       } catch (err) {
         Utils.toast('✗ ' + err.message);
-        document.getElementById('syncStatusText').textContent = 'Error: ' + err.message;
+        document.getElementById('syncStatusText').textContent = 'خطا: ' + err.message;
       }
     }
 
     async doSync() {
       if (!this.sync.hasConfig()) {
-        Utils.toast('Set up sync first (Settings → Setup Guide)');
+        Utils.toast('ابتدا همگام‌سازی را تنظیم کنید (تنظیمات → راهنما)');
         this.openSettings();
         return;
       }
       try {
         await this.sync.sync();
-        Utils.toast('Synced');
+        Utils.toast('همگام‌سازی شد');
       } catch (err) {
-        Utils.toast('Sync failed: ' + err.message);
+        Utils.toast('خطای همگام‌سازی: ' + err.message);
       }
     }
   }
