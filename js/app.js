@@ -17,6 +17,7 @@
       this._bindShortcuts();
       this._autoSyncLoop();
       this._reflectSyncConfig();
+      this._updateDatePreview();
     }
 
     _bindHeader() {
@@ -40,6 +41,10 @@
       document.querySelectorAll('input[name="status"]').forEach(r => {
         r.onchange = () => { if (r.checked) this.ui.setFilter({ status: r.value }); };
       });
+
+      const sortSel = document.getElementById('sortSelect');
+      sortSel.value = this.ui.sort;
+      sortSel.onchange = (e) => this.ui.setSort(e.target.value);
     }
 
     _bindModal() {
@@ -49,6 +54,9 @@
       document.getElementById('modalCancel').onclick = close;
       document.getElementById('modalSave').onclick = () => this.saveEditor();
       modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+      const dateInput = document.getElementById('itemDate');
+      dateInput.addEventListener('input', () => this._updateDatePreview());
 
       const sm = document.getElementById('settingsModal');
       const sclose = () => { sm.hidden = true; };
@@ -154,6 +162,21 @@
       }
     }
 
+    _updateDatePreview() {
+      const iso = document.getElementById('itemDate').value;
+      const preview = document.getElementById('itemDatePreview');
+      if (!preview) return;
+      if (!iso) {
+        preview.textContent = '— بدون تاریخ شمسی —';
+        preview.classList.add('empty');
+        return;
+      }
+      const jalali = Utils.formatJalaliDate(iso);
+      const short = Utils.formatJalaliShort(iso);
+      preview.textContent = '📅 ' + jalali + '  (' + short + ')';
+      preview.classList.remove('empty');
+    }
+
     openEditor(id) {
       const modal = document.getElementById('modal');
       const editing = !!id;
@@ -166,6 +189,7 @@
       document.getElementById('itemDate').value = item ? (item.date || '') : '';
       document.getElementById('itemTags').value = item ? (item.tags || []).join(', ') : '';
       document.getElementById('itemDone').checked = item ? !!item.done : false;
+      this._updateDatePreview();
       modal.hidden = false;
       setTimeout(() => document.getElementById('itemTitle').focus(), 30);
     }

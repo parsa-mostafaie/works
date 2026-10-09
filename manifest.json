@@ -1,7 +1,7 @@
 {
   "name": "Works",
   "short_name": "Works",
-  "description": "Live editing manager for works with local-first storage and optional cloud sync via GitHub Gist",
+  "description": "Live editing manager for works with local-first storage, Jalali dates, and optional cloud sync via GitHub Gist",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

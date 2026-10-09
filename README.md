@@ -1,12 +1,14 @@
 # Works
 
-A single-page application for managing works with live editing, bulk actions, JSON import/export, localStorage persistence, and optional cross-device cloud sync via **GitHub Gist** — fully accessible from Iran without a VPN.
+A single-page application for managing works with live editing, bulk actions, JSON import/export, localStorage persistence, **Jalali (Shamsi) date display**, and optional cross-device cloud sync via **GitHub Gist** — fully accessible from Iran without a VPN.
 
 ## Features
 
 - **Live editing** — click ✎ to edit any work in a modal
+- **Jalali (Shamsi) dates** — stored as ISO internally, displayed in Persian calendar (۱۵ مهر ۱۴۰۵)
+- **Multiple sort modes** — date ascending/descending, updated time, title
 - **Add / delete / bulk actions** — multi-select, mark done/active, delete many
-- **Filter & search** — by free text, category, and status
+- **Filter & search** — by free text, category, status, and even Jalali date text
 - **Import / Export JSON** — full data portability
 - **LocalStorage persistence** — everything saved automatically
 - **Cross-tab sync** — BroadcastChannel + storage events keep tabs in sync
@@ -32,6 +34,16 @@ Then visit `http://localhost:8000`.
 Push to `main` — the GitHub Actions workflow deploys to GitHub Pages automatically.
 
 Enable Pages once in your repo settings: **Settings → Pages → Source: GitHub Actions**.
+
+## Dates: Jalali storage & display
+
+- **Storage format:** every work's `date` field is stored as ISO Gregorian `YYYY-MM-DD`, so it's portable, sortable, and sync-safe.
+- **Display format:** the UI converts to Jalali using `Utils.formatJalaliDate()` → `۱۵ مهر ۱۴۰۵`, with Persian digits and month names.
+- **Editor:** the modal uses a native `<input type="date">` (for a reliable picker) and shows a live Jalali preview under it like `📅 ۱۵ مهر ۱۴۰۵ (۱۴۰۵/۰۷/۱۵)`.
+- **Search:** matches both the raw ISO date and the Jalali text, so "مهر" or "1405" both work.
+- **Sorting:** uses the underlying ISO date for correct chronological ordering.
+
+The Jalali algorithm is implemented from scratch in `js/utils.js` — no external dependencies.
 
 ## Cloud Sync via GitHub Gist
 
@@ -61,7 +73,7 @@ Works syncs across devices through a **private GitHub Gist**. It uses only the `
   "title": "Work title",
   "description": "Optional notes",
   "category": "essay",
-  "date": "2025-01-15",
+  "date": "2026-10-07",
   "tags": ["urgent", "review"],
   "done": false,
   "createdAt": 1700000000000,
@@ -89,12 +101,12 @@ The app extracts the ID automatically.
 ## File Structure
 
 ```
-index.html         main page + setup guide modal
+index.html         main page + setup guide modal + sort dropdown
 styles.css         all styles
-js/utils.js        helpers (uid, debounce, toast, ...)
+js/utils.js        helpers + Jalali <-> Gregorian conversion
 js/storage.js      localStorage store with change events + cross-tab
 js/sync.js         GitHub Gist sync client
-js/ui.js           DOM rendering
+js/ui.js           DOM rendering + sorting logic
 js/app.js          orchestration + service worker registration
 sw.js              service worker (offline cache)
 manifest.json      PWA manifest

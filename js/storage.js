@@ -8,7 +8,7 @@
     constructor() {
       super();
       this.items = [];
-      this.settings = { syncUrl: '', syncKey: '' };
+      this.settings = { syncUrl: '', syncKey: '', sort: 'date-asc' };
       this._load();
       this._setupCrossTab();
     }

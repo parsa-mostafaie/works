@@ -45,6 +45,16 @@
         <label><input type="radio" name="status" value="done"> Done</label>
       </div>
       <div class="filter-section">
+        <h3>Sort</h3>
+        <select id="sortSelect">
+          <option value="date-asc">📅 تاریخ (نزدیک‌ترین)</option>
+          <option value="date-desc">📅 تاریخ (دورترین)</option>
+          <option value="updated-desc">🕒 آخرین ویرایش</option>
+          <option value="updated-asc">🕒 قدیمی‌ترین ویرایش</option>
+          <option value="title-asc">🔤 عنوان (الفبا)</option>
+        </select>
+      </div>
+      <div class="filter-section">
         <h3>Stats</h3>
         <div class="stats" id="stats"></div>
       </div>
@@ -86,8 +96,9 @@
             <input type="text" id="itemCategory" placeholder="e.g. essay, design, research">
           </label>
           <label>
-            <span>Date</span>
+            <span>Date (Gregorian picker)</span>
             <input type="date" id="itemDate">
+            <small id="itemDatePreview" class="date-preview"></small>
           </label>
         </div>
         <label>

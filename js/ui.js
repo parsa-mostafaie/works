@@ -7,6 +7,7 @@
     constructor(store) {
       this.store = store;
       this.filters = { q: '', category: '', status: '' };
+      this.sort = (this.store.getSettings().sort) || 'date-asc';
       this.selected = new Set();
       this._bind();
       this._render();
@@ -24,14 +25,68 @@
         if (status === 'active' && it.done) return false;
         if (status === 'done' && !it.done) return false;
         if (ql) {
-          const hay = (it.title + ' ' + (it.description || '') + ' ' + (it.tags || []).join(' ')).toLowerCase();
+          const jalali = Utils.formatJalaliDate(it.date) + ' ' + Utils.formatJalaliShort(it.date);
+          const hay = (
+            it.title + ' ' +
+            (it.description || '') + ' ' +
+            (it.tags || []).join(' ') + ' ' +
+            (it.category || '') + ' ' +
+            (it.date || '') + ' ' +
+            jalali
+          ).toLowerCase();
           if (!hay.includes(ql)) return false;
         }
         return true;
-      }).sort((a, b) => {
-        if (a.done !== b.done) return a.done ? 1 : -1;
-        return (b.updatedAt || 0) - (a.updatedAt || 0);
       });
+    }
+
+    _sorted(items) {
+      const sort = this.sort;
+      const arr = items.slice();
+
+      // Always group by done status first (active on top)
+      const byDone = (a, b) => (a.done === b.done) ? 0 : (a.done ? 1 : -1);
+
+      const byDateAsc = (a, b) => {
+        const ad = a.date || '';
+        const bd = b.date || '';
+        if (ad && bd) return ad < bd ? -1 : (ad > bd ? 1 : 0);
+        if (ad && !bd) return -1;
+        if (!ad && bd) return 1;
+        return 0;
+      };
+
+      const byDateDesc = (a, b) => -byDateAsc(a, b);
+      const byUpdatedDesc = (a, b) => (b.updatedAt || 0) - (a.updatedAt || 0);
+      const byUpdatedAsc = (a, b) => (a.updatedAt || 0) - (b.updatedAt || 0);
+      const byTitleAsc = (a, b) => String(a.title || '').localeCompare(String(b.title || ''), 'fa');
+
+      const comparatorMap = {
+        'date-asc': (a, b) => {
+          const d = byDone(a, b); if (d) return d;
+          const c = byDateAsc(a, b); if (c) return c;
+          return byUpdatedDesc(a, b);
+        },
+        'date-desc': (a, b) => {
+          const d = byDone(a, b); if (d) return d;
+          const c = byDateDesc(a, b); if (c) return c;
+          return byUpdatedDesc(a, b);
+        },
+        'updated-desc': (a, b) => {
+          const d = byDone(a, b); if (d) return d;
+          return byUpdatedDesc(a, b);
+        },
+        'updated-asc': (a, b) => {
+          const d = byDone(a, b); if (d) return d;
+          return byUpdatedAsc(a, b);
+        },
+        'title-asc': (a, b) => {
+          const d = byDone(a, b); if (d) return d;
+          return byTitleAsc(a, b);
+        }
+      };
+
+      return arr.sort(comparatorMap[sort] || comparatorMap['date-asc']);
     }
 
     _render() {
@@ -44,7 +99,7 @@
     _renderList() {
       const list = document.getElementById('list');
       const empty = document.getElementById('empty');
-      const items = this._filtered();
+      const items = this._sorted(this._filtered());
       if (!items.length) {
         list.innerHTML = '';
         empty.hidden = false;
@@ -60,6 +115,12 @@
       const tags = (it.tags || []).map(t =>
         '<span class="chip tag">#' + Utils.escapeHtml(t) + '</span>'
       ).join('');
+
+      const jalali = Utils.formatJalaliDate(it.date);
+      const dateChip = jalali
+        ? '<span class="chip date" title="' + Utils.escapeHtml(it.date) + '">📅 ' + Utils.escapeHtml(jalali) + '</span>'
+        : '';
+
       return (
         '<article class="item' + done + sel + '" data-id="' + Utils.escapeHtml(it.id) + '">' +
           '<div class="item-checkbox">' +
@@ -70,7 +131,7 @@
             (it.description ? '<div class="item-desc">' + Utils.escapeHtml(it.description) + '</div>' : '') +
             '<div class="item-meta">' +
               (it.category ? '<span class="chip category">' + Utils.escapeHtml(it.category) + '</span>' : '') +
-              (it.date ? '<span class="chip date">📅 ' + Utils.formatDate(it.date) + '</span>' : '') +
+              dateChip +
               tags +
             '</div>' +
           '</div>' +
@@ -128,6 +189,12 @@
 
     setFilter(patch) {
       Object.assign(this.filters, patch);
+      this._render();
+    }
+
+    setSort(sort) {
+      this.sort = sort;
+      this.store.saveSettings({ sort: sort });
       this._render();
     }
   }

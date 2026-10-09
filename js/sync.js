@@ -23,10 +23,6 @@
       return (this.store.getSettings().syncKey || '').trim();
     }
 
-    /**
-     * Accepts either a raw Gist ID ("a1b2c3d4e5f6...") or a full Gist URL
-     * ("https://gist.github.com/user/a1b2c3d4e5f6...") and returns the ID.
-     */
     _gistId() {
       const raw = (this.store.getSettings().syncUrl || '').trim();
       if (!raw) return '';
@@ -51,7 +47,6 @@
       return !!(this._gistId() && this._token());
     }
 
-    /** Lightweight check: does the Gist exist and does the token have access? */
     async testConnection() {
       const gistId = this._gistId();
       const token = this._token();
