@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#6366f1">
+  <title>Works</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-left">
+      <h1>🧩 Works</h1>
+      <span class="sync-status">
+        <span class="dot" id="syncDot"></span>
+        <span id="syncText">Ready</span>
+      </span>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-primary" id="addBtn">+ Add Work</button>
+      <button class="btn" id="importBtn">📥 Import</button>
+      <button class="btn" id="exportBtn">📤 Export</button>
+      <button class="btn" id="syncBtn">☁️ Sync</button>
+      <button class="btn" id="settingsBtn">⚙️</button>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <aside class="sidebar">
+      <div class="filter-section">
+        <h3>Search</h3>
+        <input type="text" id="searchInput" placeholder="Search... (Ctrl+K)">
+      </div>
+      <div class="filter-section">
+        <h3>Category</h3>
+        <select id="categoryFilter">
+          <option value="">All Categories</option>
+        </select>
+      </div>
+      <div class="filter-section">
+        <h3>Status</h3>
+        <label><input type="radio" name="status" value="" checked> All</label>
+        <label><input type="radio" name="status" value="active"> Active</label>
+        <label><input type="radio" name="status" value="done"> Done</label>
+      </div>
+      <div class="filter-section">
+        <h3>Stats</h3>
+        <div class="stats" id="stats"></div>
+      </div>
+    </aside>
+
+    <section class="content">
+      <div class="bulk-bar" id="bulkBar" hidden>
+        <span id="selectedCount">0 selected</span>
+        <button class="btn btn-sm" id="bulkDone">Mark Done</button>
+        <button class="btn btn-sm" id="bulkUndone">Mark Active</button>
+        <button class="btn btn-sm btn-danger" id="bulkDelete">Delete</button>
+        <button class="btn btn-sm" id="bulkClear">Clear</button>
+      </div>
+
+      <div class="list" id="list"></div>
+      <div class="empty" id="empty" hidden>No works yet. Click "Add Work" to start.</div>
+    </section>
+  </main>
+
+  <div class="modal" id="modal" hidden>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">New Work</h2>
+        <button class="icon-btn" id="modalClose">✕</button>
+      </div>
+      <form id="itemForm" class="modal-body" onsubmit="return false;">
+        <input type="hidden" id="itemId">
+        <label>
+          <span>Title *</span>
+          <input type="text" id="itemTitle" required>
+        </label>
+        <label>
+          <span>Description</span>
+          <textarea id="itemDesc" rows="3"></textarea>
+        </label>
+        <div class="grid-2">
+          <label>
+            <span>Category</span>
+            <input type="text" id="itemCategory" placeholder="e.g. essay, design, research">
+          </label>
+          <label>
+            <span>Date</span>
+            <input type="date" id="itemDate">
+          </label>
+        </div>
+        <label>
+          <span>Tags (comma separated)</span>
+          <input type="text" id="itemTags" placeholder="tag1, tag2">
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" id="itemDone">
+          <span>Done</span>
+        </label>
+      </form>
+      <div class="modal-footer">
+        <button class="btn" id="modalCancel">Cancel</button>
+        <button class="btn btn-primary" id="modalSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="settingsModal" hidden>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Settings &amp; Sync</h2>
+        <button class="icon-btn" id="settingsClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <h3>Cloud Sync (optional)</h3>
+        <p class="help">Enter a JSONBin.io bin URL and access key to sync across devices. Leave empty for local-only mode.</p>
+        <label>
+          <span>Sync Endpoint URL</span>
+          <input type="url" id="syncUrl" placeholder="https://api.jsonbin.io/v3/b/...">
+        </label>
+        <label>
+          <span>Sync API Key</span>
+          <input type="password" id="syncKey" placeholder="X-Master-Key">
+        </label>
+        <button class="btn" id="syncNowBtn">Sync Now</button>
+        <p class="status-text" id="syncStatusText"></p>
+        <hr>
+        <h3>Data</h3>
+        <button class="btn btn-danger" id="clearAllBtn">Clear All Data</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" accept=".json,application/json" hidden>
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "Works",
+  "short_name": "Works",
+  "description": "Live editing manager for works with local-first storage and optional cloud sync",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f8fafc",
+  "theme_color": "#6366f1",
+  "icons": []
+}
