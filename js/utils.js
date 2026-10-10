@@ -6,7 +6,6 @@
     'مهر','آبان','آذر','دی','بهمن','اسفند'
   ];
 
-  /* ---------------- SVG Icons (Feather-style, minimal) ---------------- */
   const ICONS = {
     plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
     x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
@@ -38,7 +37,8 @@
     database: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/>',
     clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
     flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>',
-    info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>'
+    info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
+    sliders: '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>'
   };
 
   function iconSvg(name, size) {
@@ -82,7 +82,18 @@
   }
 
   function toPersianDigits(input) { return String(input).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]); }
+  function toLatinDigits(input) { return String(input).replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))); }
   function pad2(n) { return n < 10 ? '0'+n : ''+n; }
+
+  function isLeapJalali(jy) {
+    const mod = ((jy % 33) + 33) % 33;
+    return [1,5,9,13,17,22,26,30].indexOf(mod) !== -1;
+  }
+  function jalaliMonthDays(jy, jm) {
+    if (jm <= 6) return 31;
+    if (jm <= 11) return 30;
+    return isLeapJalali(jy) ? 30 : 29;
+  }
 
   function parseLinks(raw) {
     if (!raw) return [];
@@ -105,6 +116,7 @@
   const Utils = {
     iconSvg,
     ICONS,
+    PERSIAN_MONTHS,
     uid() { return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,9); },
     debounce(fn, wait=200) {
       let t;
@@ -115,8 +127,11 @@
       return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     },
     toPersianDigits,
+    toLatinDigits,
     gregorianToJalali,
     jalaliToGregorian,
+    isLeapJalali,
+    jalaliMonthDays,
     parseLinks,
     isoToJalali(iso) {
       if (!iso) return null;
@@ -143,14 +158,38 @@
       const [jy, jm, jd] = gregorianToJalali(now.getFullYear(), now.getMonth()+1, now.getDate());
       return toPersianDigits(jd) + ' ' + PERSIAN_MONTHS[jm-1] + ' ' + toPersianDigits(jy);
     },
+    todayJalaliParts() {
+      const n = new Date();
+      return gregorianToJalali(n.getFullYear(), n.getMonth()+1, n.getDate());
+    },
     todayIso() {
       const n = new Date();
       return n.getFullYear() + '-' + pad2(n.getMonth()+1) + '-' + pad2(n.getDate());
     },
-    isPastDate(iso) {
-      if (!iso) return false;
-      return iso < this.todayIso();
+    isPastDate(iso) { return !iso ? false : iso < this.todayIso(); },
+
+    /**
+     * Auto-convert digits to Persian as user types on any input/textarea
+     * without data-no-persianify.
+     */
+    autoPersianify(root) {
+      (root || document).querySelectorAll('input[type="text"], input[type="search"], textarea').forEach(el => {
+        if (el.hasAttribute('data-no-persianify')) return;
+        if (el.dataset.persianified) return;
+        el.dataset.persianified = '1';
+        el.addEventListener('input', () => {
+          const start = el.selectionStart;
+          const end = el.selectionEnd;
+          const before = el.value;
+          const after = toPersianDigits(before);
+          if (before !== after) {
+            el.value = after;
+            try { el.setSelectionRange(start, end); } catch (e) {}
+          }
+        });
+      });
     },
+
     download(filename, content) {
       const blob = new Blob([content], { type: 'application/json' });
       const url = URL.createObjectURL(blob);

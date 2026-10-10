@@ -34,6 +34,9 @@
         <span class="icon" data-icon="plus"></span>
         <span>افزودن</span>
       </button>
+      <button class="btn" id="calendarBtn" title="تقویم رویدادها">
+        <span class="icon" data-icon="calendar"></span>
+      </button>
       <button class="btn" id="importBtn" title="ورود از فایل JSON">
         <span class="icon" data-icon="import"></span>
       </button>
@@ -132,8 +135,16 @@
           </label>
           <label>
             <span><span class="icon" data-icon="calendar"></span> تاریخ</span>
-            <input type="date" id="itemDate">
-            <small id="itemDatePreview" class="date-preview"></small>
+            <div class="jalali-field-wrap">
+              <button type="button" class="jalali-field" id="itemDateBtn">
+                <span class="icon" data-icon="calendar"></span>
+                <span id="itemDateText">انتخاب تاریخ…</span>
+              </button>
+              <button type="button" class="icon-btn jalali-clear-btn" id="itemDateClear" hidden title="پاک کردن تاریخ">
+                <span data-icon="x"></span>
+              </button>
+            </div>
+            <input type="hidden" id="itemDate">
           </label>
         </div>
         <label>
@@ -142,7 +153,7 @@
         </label>
         <label>
           <span><span class="icon" data-icon="link"></span> پیوندها <small class="help-inline">هر خط یک پیوند — <code>عنوان | آدرس</code> یا فقط آدرس</small></span>
-          <textarea id="itemLinks" rows="3" placeholder="سایت رسمی | https://example.com"></textarea>
+          <textarea id="itemLinks" rows="3" data-no-persianify placeholder="سایت رسمی | https://example.com"></textarea>
         </label>
         <label class="checkbox">
           <input type="checkbox" id="itemDone">
@@ -152,6 +163,39 @@
       <div class="modal-footer">
         <button class="btn" id="modalCancel">انصراف</button>
         <button class="btn btn-primary" id="modalSave"><span class="icon" data-icon="save"></span> ذخیره</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="calendarModal" hidden>
+    <div class="modal-content glass-strong cal-modal-content">
+      <div class="modal-header">
+        <h2><span class="icon" data-icon="calendar"></span> <span id="calModalTitle">تقویم رویدادها</span></h2>
+        <button class="icon-btn" id="calendarClose" title="بستن"><span data-icon="x"></span></button>
+      </div>
+      <div class="modal-body cal-body">
+        <div class="cal-nav">
+          <button type="button" class="icon-btn" id="calNextMonth" title="ماه بعد">‹</button>
+          <span class="cal-month-label" id="calMonthLabel"></span>
+          <button type="button" class="icon-btn" id="calPrevMonth" title="ماه قبل">›</button>
+          <button type="button" class="btn btn-sm" id="calToday"><span class="icon" data-icon="flag"></span> امروز</button>
+        </div>
+        <div class="cal-weekdays">
+          <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span>
+        </div>
+        <div class="cal-days" id="calDays"></div>
+        <div class="cal-legend">
+          <span class="cal-legend-item"><span class="cal-legend-dot" style="background:#6366f1"></span> انتخاب‌شده</span>
+          <span class="cal-legend-item"><span class="cal-legend-dot" style="background:#10b981"></span> بیوانفورماتیک</span>
+          <span class="cal-legend-item"><span class="cal-legend-dot" style="background:#8b5cf6"></span> کارسوق</span>
+          <span class="cal-legend-item"><span class="cal-legend-dot" style="background:#f59e0b"></span> المپیاد</span>
+          <span class="cal-legend-item"><span class="cal-legend-dot" style="background:#ec4899"></span> جشنواره</span>
+          <span class="cal-legend-item"><span class="cal-legend-dot" style="background:#3b82f6"></span> فناوری</span>
+          <span class="cal-legend-item"><span class="cal-legend-dot" style="background:#14b8a6"></span> علوم شناختی</span>
+        </div>
+        <div class="cal-events" id="calEvents">
+          <p class="cal-hint">روی یک روز کلیک کنید تا رویدادهای آن را ببینید.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -176,7 +220,7 @@
 
         <label>
           <span>شناسه یا آدرس Gist</span>
-          <input type="text" id="syncUrl" placeholder="a1b2c3d4e5f6 یا URL کامل" dir="ltr">
+          <input type="text" id="syncUrl" placeholder="a1b2c3d4e5f6 یا URL کامل" dir="ltr" data-no-persianify>
         </label>
         <label>
           <span>توکن GitHub</span>
@@ -262,6 +306,7 @@
   <script src="js/utils.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/sync.js"></script>
+  <script src="js/calendar.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/app.js"></script>
 </body>

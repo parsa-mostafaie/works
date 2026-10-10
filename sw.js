@@ -1,7 +1,7 @@
-const CACHE = 'works-v4';
+const CACHE = 'works-v5';
 const ASSETS = [
   './','./index.html','./styles.css','./manifest.json',
-  './js/utils.js','./js/storage.js','./js/sync.js','./js/ui.js','./js/app.js'
+  './js/utils.js','./js/storage.js','./js/sync.js','./js/calendar.js','./js/ui.js','./js/app.js'
 ];
 
 self.addEventListener('install', (e) => {

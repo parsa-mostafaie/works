@@ -6,9 +6,11 @@
   class AppClass {
     constructor() {
       Utils.injectIcons(document);
+      Utils.autoPersianify(document);
       this.store = new global.Store();
       this.ui = new global.UI(this.store);
       this.sync = new global.CloudSync(this.store);
+      this.calendar = new global.CalendarView(this);
       this._bindHeader();
       this._bindFilters();
       this._bindModal();
@@ -18,7 +20,6 @@
       this._bindShortcuts();
       this._autoSyncLoop();
       this._reflectSyncConfig();
-      this._updateDatePreview();
     }
 
     _bindHeader() {
@@ -27,6 +28,7 @@
       document.getElementById('importBtn').onclick = () => document.getElementById('fileInput').click();
       document.getElementById('settingsBtn').onclick = () => this.openSettings();
       document.getElementById('syncBtn').onclick = () => this.doSync();
+      document.getElementById('calendarBtn').onclick = () => this.calendar.open();
       document.getElementById('fileInput').onchange = (e) => this.import(e);
       document.getElementById('list').addEventListener('click', (e) => this.ui.handleListClick(e));
     }
@@ -54,8 +56,14 @@
       document.getElementById('modalSave').onclick = () => this.saveEditor();
       modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
 
-      const dateInput = document.getElementById('itemDate');
-      dateInput.addEventListener('input', () => this._updateDatePreview());
+      // Jalali date picker
+      document.getElementById('itemDateBtn').onclick = () => {
+        const current = document.getElementById('itemDate').value || '';
+        this.calendar.openPicker(current, (iso) => {
+          this._setDate(iso);
+        });
+      };
+      document.getElementById('itemDateClear').onclick = () => this._setDate('');
 
       const sm = document.getElementById('settingsModal');
       const sclose = () => { sm.hidden = true; };
@@ -128,6 +136,7 @@
           document.getElementById('modal').hidden = true;
           document.getElementById('settingsModal').hidden = true;
           document.getElementById('guideModal').hidden = true;
+          document.getElementById('calendarModal').hidden = true;
         }
       });
     }
@@ -145,20 +154,25 @@
       }
     }
 
-    _updateDatePreview() {
-      const iso = document.getElementById('itemDate').value;
-      const preview = document.getElementById('itemDatePreview');
-      if (!preview) return;
-      if (!iso) {
-        preview.textContent = '— بدون تاریخ شمسی —';
-        preview.classList.add('empty');
-        return;
+    _setDate(iso) {
+      const hidden = document.getElementById('itemDate');
+      const btnText = document.getElementById('itemDateText');
+      const btn = document.getElementById('itemDateBtn');
+      const clearBtn = document.getElementById('itemDateClear');
+
+      hidden.value = iso || '';
+      if (iso) {
+        const jalali = Utils.formatJalaliDate(iso);
+        const short = Utils.formatJalaliShort(iso);
+        const past = Utils.isPastDate(iso) ? ' • گذشته' : '';
+        btnText.textContent = jalali + ' (' + short + ')' + past;
+        btn.classList.remove('empty');
+        clearBtn.hidden = false;
+      } else {
+        btnText.textContent = 'انتخاب تاریخ…';
+        btn.classList.add('empty');
+        clearBtn.hidden = true;
       }
-      const jalali = Utils.formatJalaliDate(iso);
-      const short = Utils.formatJalaliShort(iso);
-      const past = Utils.isPastDate(iso) ? ' • گذشته' : '';
-      preview.textContent = jalali + ' (' + short + ')' + past;
-      preview.classList.remove('empty');
     }
 
     openEditor(id) {
@@ -170,13 +184,12 @@
       document.getElementById('itemTitle').value = item ? item.title : '';
       document.getElementById('itemDesc').value = item ? (item.description || '') : '';
       document.getElementById('itemCategory').value = item ? (item.category || '') : '';
-      document.getElementById('itemDate').value = item ? (item.date || '') : '';
       document.getElementById('itemTags').value = item ? (item.tags || []).join('، ') : '';
       document.getElementById('itemLinks').value = item
         ? (item.links || []).map(l => l.label && l.label !== l.url ? (l.label + ' | ' + l.url) : l.url).join('\n')
         : '';
       document.getElementById('itemDone').checked = item ? !!item.done : false;
-      this._updateDatePreview();
+      this._setDate(item ? (item.date || '') : '');
       modal.hidden = false;
       setTimeout(() => document.getElementById('itemTitle').focus(), 30);
     }
@@ -185,7 +198,7 @@
       const id = document.getElementById('itemId').value;
       const title = document.getElementById('itemTitle').value.trim();
       if (!title) { Utils.toast('عنوان الزامی است'); return; }
-      const tags = document.getElementById('itemTags').value
+      const tags = Utils.toLatinDigits(document.getElementById('itemTags').value)
         .split(/[,،]/).map(t => t.trim()).filter(Boolean);
       const links = Utils.parseLinks(document.getElementById('itemLinks').value);
       const data = {

@@ -36,12 +36,6 @@
       });
     }
 
-    /**
-     * Priority tiers:
-     *  0 = active + not past
-     *  1 = active + past  (or no date is treated as not-past)
-     *  2 = done (all)
-     */
     _priority(it) {
       if (it.done) return 2;
       if (it.date && Utils.isPastDate(it.date)) return 1;
@@ -104,22 +98,26 @@
       const pastCls = isPast ? ' past' : '';
 
       const tags = (it.tags || []).map(t =>
-        '<span class="chip tag"><span class="icon" data-icon="hash"></span>' + Utils.escapeHtml(t) + '</span>'
+        '<span class="chip tag">' + Utils.iconSvg('hash', 12) + Utils.escapeHtml(t) + '</span>'
       ).join('');
 
       const jalali = Utils.formatJalaliDate(it.date);
       const dateChip = jalali
-        ? '<span class="chip date' + pastCls + '" title="' + Utils.escapeHtml(it.date) + '"><span class="icon" data-icon="calendar"></span>' + Utils.escapeHtml(jalali) + '</span>'
+        ? '<span class="chip date' + pastCls + '" title="' + Utils.escapeHtml(it.date) + '">' +
+            Utils.iconSvg('calendar', 12) + Utils.escapeHtml(jalali) +
+          '</span>'
         : '';
 
       const links = (it.links || []).map(l => {
         const safeUrl = Utils.escapeHtml(l.url);
         const safeLabel = Utils.escapeHtml(l.label || l.url);
-        return '<a class="chip link" href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" title="' + safeUrl + '"><span class="icon" data-icon="link"></span>' + safeLabel + '</a>';
+        return '<a class="chip link" href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" title="' + safeUrl + '">' +
+          Utils.iconSvg('link', 12) + safeLabel +
+        '</a>';
       }).join('');
 
       const catChip = it.category
-        ? '<span class="chip category"><span class="icon" data-icon="tag"></span>' + Utils.escapeHtml(it.category) + '</span>'
+        ? '<span class="chip category">' + Utils.iconSvg('tag', 12) + Utils.escapeHtml(it.category) + '</span>'
         : '';
 
       return (
