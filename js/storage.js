@@ -1,14 +1,20 @@
 (function (global) {
   'use strict';
 
-  const STORAGE_KEY = 'works.items.v1';
+  const STORAGE_KEY = 'works.items.v2';
   const SETTINGS_KEY = 'works.settings.v1';
+  const LEGACY_KEY = 'works.items.v1';
 
   class Store extends EventTarget {
     constructor() {
       super();
       this.items = [];
-      this.settings = { syncUrl: '', syncKey: '', sort: 'date-asc' };
+      this.settings = {
+        syncUrl: '',
+        syncKey: '',
+        sort: 'date-asc',
+        timeTypeFilter: ''
+      };
       this._load();
       this._setupCrossTab();
     }
@@ -17,17 +23,38 @@
       if (!it || typeof it !== 'object') return it;
       if (!Array.isArray(it.tags)) it.tags = [];
       if (!Array.isArray(it.links)) it.links = [];
-      return it;
+      const t = (global.Utils && Utils.normalizeTiming) ? Utils.normalizeTiming(it) : it;
+      // Preserve identity fields
+      t.id = it.id;
+      t.createdAt = it.createdAt || Date.now();
+      t.updatedAt = it.updatedAt || t.createdAt;
+      return t;
     }
 
     _load() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        let raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          // Migrate from v1
+          raw = localStorage.getItem(LEGACY_KEY);
+          if (raw) {
+            try {
+              const arr = JSON.parse(raw);
+              this.items = Array.isArray(arr) ? arr.map(x => this._normalize(x)) : [];
+              // Persist under new key; leave legacy key alone as a backup
+              this._save();
+            } catch (e) { this.items = []; }
+            return;
+          }
+        }
         this.items = raw ? JSON.parse(raw) : [];
-        this.items.forEach(it => this._normalize(it));
+        this.items = this.items.map(x => this._normalize(x));
         const s = localStorage.getItem(SETTINGS_KEY);
         if (s) this.settings = Object.assign(this.settings, JSON.parse(s));
-      } catch (e) { console.warn('Load failed', e); this.items = []; }
+      } catch (e) {
+        console.warn('Load failed', e);
+        this.items = [];
+      }
     }
 
     _save() {
@@ -48,7 +75,7 @@
         };
       }
       global.addEventListener('storage', (e) => {
-        if (e.key === STORAGE_KEY || e.key === SETTINGS_KEY) {
+        if (e.key === STORAGE_KEY || e.key === SETTINGS_KEY || e.key === LEGACY_KEY) {
           this._load();
           this.dispatchEvent(new CustomEvent('change', { detail: { source: 'remote' } }));
         }
@@ -68,18 +95,23 @@
 
     add(data) {
       const now = Date.now();
-      const item = this._normalize(Object.assign({
+      const base = {
         id: (global.Utils && Utils.uid()) || ('id_' + now + '_' + Math.random().toString(36).slice(2,7)),
         title: 'بدون عنوان',
         description: '',
         category: '',
-        date: '',
         tags: [],
         links: [],
         done: false,
+        timeType: 'single',
+        date: '',
+        endDate: '',
+        time: '',
+        isDeadline: false,
         createdAt: now,
         updatedAt: now
-      }, data));
+      };
+      const item = this._normalize(Object.assign(base, data));
       this.items.push(item);
       this._emit();
       return item;
@@ -88,9 +120,10 @@
     update(id, patch) {
       const i = this.items.findIndex(x => x.id === id);
       if (i === -1) return null;
-      this.items[i] = this._normalize(Object.assign({}, this.items[i], patch, { updatedAt: Date.now() }));
+      const merged = this._normalize(Object.assign({}, this.items[i], patch, { updatedAt: Date.now() }));
+      this.items[i] = merged;
       this._emit();
-      return this.items[i];
+      return merged;
     }
 
     remove(id) {
@@ -109,23 +142,26 @@
       const now = Date.now();
       let changed = false;
       this.items.forEach(it => {
-        if (set.has(it.id)) { Object.assign(it, patch, { updatedAt: now }); changed = true; }
+        if (set.has(it.id)) {
+          const merged = this._normalize(Object.assign({}, it, patch, { updatedAt: now }));
+          Object.keys(merged).forEach(k => { it[k] = merged[k]; });
+          changed = true;
+        }
       });
       if (changed) this._emit();
     }
     replaceAll(items) {
-      this.items = Array.isArray(items) ? items.slice() : [];
-      this.items.forEach(it => this._normalize(it));
+      this.items = Array.isArray(items) ? items.map(x => this._normalize(x)) : [];
       this._emit();
     }
     mergeAll(items) {
       const map = new Map(this.items.map(i => [i.id, i]));
       (items || []).forEach(incoming => {
         if (!incoming || !incoming.id) return;
-        this._normalize(incoming);
-        const existing = map.get(incoming.id);
-        if (!existing || (incoming.updatedAt || 0) > (existing.updatedAt || 0)) {
-          map.set(incoming.id, incoming);
+        const normalized = this._normalize(incoming);
+        const existing = map.get(normalized.id);
+        if (!existing || (normalized.updatedAt || 0) > (existing.updatedAt || 0)) {
+          map.set(normalized.id, normalized);
         }
       });
       this.items = Array.from(map.values());

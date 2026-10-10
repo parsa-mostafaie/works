@@ -21,7 +21,7 @@
     constructor(app) {
       this.app = app;
       this.store = app.store;
-      this.mode = 'view';           // 'view' | 'pick'
+      this.mode = 'view';
       this.onPick = null;
       this.currentYear = 0;
       this.currentMonth = 0;
@@ -35,10 +35,13 @@
       document.getElementById('calendarModal').addEventListener('click', (e) => {
         if (e.target.id === 'calendarModal') this.close();
       });
-      // Right arrow = previous month (RTL)
       document.getElementById('calPrevMonth').onclick = () => this._navigate(-1);
       document.getElementById('calNextMonth').onclick = () => this._navigate(1);
-      document.getElementById('calToday').onclick = () => { this._goToToday(); this.selectedDate = Utils.todayIso(); this.render(); };
+      document.getElementById('calToday').onclick = () => {
+        this._goToToday();
+        this.selectedDate = Utils.todayIso();
+        this.render();
+      };
 
       document.getElementById('calDays').addEventListener('click', (e) => {
         const cell = e.target.closest('.cal-cell');
@@ -61,9 +64,7 @@
           return;
         }
         const card = e.target.closest('.cal-event');
-        if (card && !e.target.closest('a')) {
-          card.classList.toggle('expanded');
-        }
+        if (card && !e.target.closest('a')) card.classList.toggle('expanded');
       });
     }
 
@@ -77,10 +78,17 @@
       this.render();
     }
 
-    openPicker(initialIso, callback) {
+    /**
+     * Open the calendar in "pick a date" mode.
+     * @param {string} initialIso  currently selected ISO date (or '')
+     * @param {function} callback  called with the picked ISO date (or '' if cleared)
+     * @param {object} options     { title, allowClear }
+     */
+    openPicker(initialIso, callback, options) {
+      options = options || {};
       this.mode = 'pick';
       this.onPick = callback;
-      document.getElementById('calModalTitle').textContent = 'انتخاب تاریخ';
+      document.getElementById('calModalTitle').textContent = options.title || 'انتخاب تاریخ';
       document.getElementById('calendarModal').hidden = false;
 
       if (initialIso) {
@@ -127,6 +135,37 @@
       return 'hsl(' + (h % 360) + ' 65% 55%)';
     }
 
+    /**
+     * Build a map ISO date → array of items that should be visible on that day.
+     * - single: only on its date
+     * - range: on every day between start and end
+     * - ongoing: only on its start date (with an "ongoing" marker)
+     * - tba: not shown on the calendar at all
+     */
+    _groupByDate() {
+      const byDate = {};
+      const add = (iso, it) => {
+        if (!iso) return;
+        if (!byDate[iso]) byDate[iso] = [];
+        byDate[iso].push(it);
+      };
+
+      this.store.list().forEach(it => {
+        const tt = it.timeType || 'single';
+        if (tt === 'tba') return;
+        if (!it.date) return;
+
+        if (tt === 'range' && it.endDate && it.endDate >= it.date) {
+          const days = Utils.enumerateDates(it.date, it.endDate);
+          days.forEach(d => add(d, it));
+        } else {
+          // single or ongoing (also covers range with no endDate)
+          add(it.date, it);
+        }
+      });
+      return byDate;
+    }
+
     render() {
       const y = this.currentYear, m = this.currentMonth;
       document.getElementById('calMonthLabel').textContent =
@@ -137,13 +176,7 @@
       const firstDate = new Date(firstIso + 'T00:00:00');
       const firstCol = (firstDate.getDay() + 1) % 7; // 0=Sat ... 6=Fri
 
-      // Group events by ISO date
-      const byDate = {};
-      this.store.list().forEach(it => {
-        if (!it.date) return;
-        if (!byDate[it.date]) byDate[it.date] = [];
-        byDate[it.date].push(it);
-      });
+      const byDate = this._groupByDate();
 
       let html = '';
       for (let i = 0; i < firstCol; i++) html += '<div class="cal-cell empty"></div>';
@@ -155,8 +188,12 @@
         const isToday = iso === today;
         const isSelected = iso === this.selectedDate;
 
+        // Detect if this day is part of a multi-day range
+        const hasRange = events.some(e => e.timeType === 'range');
+
         const cls = ['cal-cell'];
         if (events.length) cls.push('has-events');
+        if (hasRange) cls.push('in-range');
         if (isToday) cls.push('is-today');
         if (isSelected) cls.push('is-selected');
 
@@ -196,12 +233,23 @@
         html += events.map(e => {
           const color = this._colorForCategory(e.category);
           const linksHtml = (e.links || []).map(l =>
-            '<a href="' + Utils.escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer">🔗 ' + Utils.escapeHtml(l.label) + '</a>'
+            '<a href="' + Utils.escapeHtml(l.url) + '" target="_blank" rel="noopener noreferrer">' + Utils.iconSvg('link', 10) + ' ' + Utils.escapeHtml(l.label) + '</a>'
           ).join('');
+
+          let badges = '';
+          if (e.time) {
+            badges += '<span class="event-time-badge">' + Utils.toPersianDigits(e.time) + '</span>';
+          }
+          if (e.timeType === 'range' && e.endDate && e.date !== e.endDate) {
+            badges += '<span class="event-range-badge">بازه</span>';
+          } else if (e.timeType === 'ongoing') {
+            badges += '<span class="event-range-badge">مستمر</span>';
+          }
+
           return '<div class="cal-event" data-id="' + Utils.escapeHtml(e.id) + '">' +
             '<span class="cal-event-color" style="background:' + color + '"></span>' +
             '<div class="cal-event-main">' +
-              '<div class="cal-event-title">' + Utils.escapeHtml(e.title) + '</div>' +
+              '<div class="cal-event-title">' + Utils.escapeHtml(e.title) + ' ' + badges + '</div>' +
               (e.description ? '<div class="cal-event-desc">' + Utils.escapeHtml(e.description) + '</div>' : '') +
               (linksHtml ? '<div class="cal-event-links">' + linksHtml + '</div>' : '') +
             '</div>' +

@@ -6,7 +6,7 @@
   class UI {
     constructor(store) {
       this.store = store;
-      this.filters = { q: '', category: '', status: '' };
+      this.filters = { q: '', category: '', status: '', timeType: '' };
       this.sort = (this.store.getSettings().sort) || 'date-asc';
       this.selected = new Set();
       this._bind();
@@ -16,19 +16,23 @@
     _bind() { this.store.addEventListener('change', () => this._render()); }
 
     _filtered() {
-      const { q, category, status } = this.filters;
+      const { q, category, status, timeType } = this.filters;
       const ql = q.toLowerCase().trim();
       return this.store.list().filter(it => {
         if (category && it.category !== category) return false;
         if (status === 'active' && it.done) return false;
         if (status === 'done' && !it.done) return false;
+        if (timeType && (it.timeType || 'single') !== timeType) return false;
         if (ql) {
           const linksText = (it.links || []).map(l => l.label + ' ' + l.url).join(' ');
           const jalali = Utils.formatJalaliDate(it.date) + ' ' + Utils.formatJalaliShort(it.date);
+          const jalaliEnd = it.endDate ? Utils.formatJalaliDate(it.endDate) : '';
+          const timing = Utils.formatItemTiming(it);
           const hay = (
             (it.title || '') + ' ' + (it.description || '') + ' ' +
             (it.tags || []).join(' ') + ' ' + (it.category || '') + ' ' +
-            (it.date || '') + ' ' + jalali + ' ' + linksText
+            (it.date || '') + ' ' + (it.endDate || '') + ' ' +
+            jalali + ' ' + jalaliEnd + ' ' + timing + ' ' + linksText
           ).toLowerCase();
           if (!hay.includes(ql)) return false;
         }
@@ -36,9 +40,15 @@
       });
     }
 
+    /**
+     * Priority tiers:
+     *  0 = active, not past (based on effective end)
+     *  1 = active, past
+     *  2 = done
+     */
     _priority(it) {
       if (it.done) return 2;
-      if (it.date && Utils.isPastDate(it.date)) return 1;
+      if (Utils.isPastItem(it)) return 1;
       return 0;
     }
 
@@ -94,18 +104,43 @@
     _itemHtml(it) {
       const sel = this.selected.has(it.id) ? ' selected' : '';
       const done = it.done ? ' done' : '';
-      const isPast = !it.done && it.date && Utils.isPastDate(it.date);
-      const pastCls = isPast ? ' past' : '';
+      const tt = it.timeType || 'single';
+      const isPast = !it.done && Utils.isPastItem(it);
+      const isOngoing = !it.done && tt === 'ongoing';
+      const isRange = tt === 'range';
+
+      const classes = ['item'];
+      if (done) classes.push('done');
+      if (sel) classes.push('selected');
+      if (isPast) classes.push('past');
+      if (isOngoing) classes.push('ongoing');
+      if (isRange) classes.push('range');
 
       const tags = (it.tags || []).map(t =>
         '<span class="chip tag">' + Utils.iconSvg('hash', 12) + Utils.escapeHtml(t) + '</span>'
       ).join('');
 
-      const jalali = Utils.formatJalaliDate(it.date);
-      const dateChip = jalali
-        ? '<span class="chip date' + pastCls + '" title="' + Utils.escapeHtml(it.date) + '">' +
-            Utils.iconSvg('calendar', 12) + Utils.escapeHtml(jalali) +
-          '</span>'
+      // Date chip
+      let dateChip = '';
+      const dateChipClass = (() => {
+        if (tt === 'tba' || !it.date) return 'tba';
+        if (isPast) return 'past';
+        if (isOngoing) return 'ongoing';
+        if (isRange) return 'range';
+        return '';
+      })();
+      const dateChipIcon = tt === 'ongoing' ? 'clock' : 'calendar';
+      const dateText = Utils.formatItemTiming(it);
+      if (dateText) {
+        const timeSuffix = it.time && tt !== 'ongoing' ? '' : '';
+        dateChip = '<span class="chip date ' + dateChipClass + '" title="' + Utils.escapeHtml(it.date + (it.endDate ? ' → ' + it.endDate : '')) + '">' +
+          Utils.iconSvg(dateChipIcon, 12) + Utils.escapeHtml(dateText) +
+          '</span>';
+      }
+
+      // Deadline badge
+      const deadlineBadge = it.isDeadline
+        ? '<span class="chip deadline-badge">' + Utils.iconSvg('alert', 12) + ' مهلت</span>'
         : '';
 
       const links = (it.links || []).map(l => {
@@ -121,14 +156,14 @@
         : '';
 
       return (
-        '<article class="item' + done + pastCls + sel + '" data-id="' + Utils.escapeHtml(it.id) + '">' +
+        '<article class="' + classes.join(' ') + '" data-id="' + Utils.escapeHtml(it.id) + '">' +
           '<div class="item-checkbox">' +
             '<input type="checkbox" data-action="select" ' + (this.selected.has(it.id) ? 'checked' : '') + ' title="انتخاب">' +
           '</div>' +
           '<div class="item-main">' +
             '<div class="item-title">' + Utils.escapeHtml(it.title) + '</div>' +
             (it.description ? '<div class="item-desc">' + Utils.escapeHtml(it.description) + '</div>' : '') +
-            '<div class="item-meta">' + catChip + dateChip + tags + links + '</div>' +
+            '<div class="item-meta">' + catChip + dateChip + deadlineBadge + tags + links + '</div>' +
           '</div>' +
           '<div class="item-actions">' +
             '<button class="icon-btn" data-action="toggle" data-tip="done" title="' + (it.done ? 'بازگرداندن' : 'انجام‌شده') + '">' +
@@ -159,11 +194,15 @@
       const all = this.store.list();
       const done = all.filter(i => i.done).length;
       const active = all.length - done;
-      const past = all.filter(i => !i.done && i.date && Utils.isPastDate(i.date)).length;
+      const past = all.filter(i => !i.done && Utils.isPastItem(i)).length;
+      const ongoing = all.filter(i => !i.done && (i.timeType === 'ongoing')).length;
+      const ranged = all.filter(i => !i.done && (i.timeType === 'range')).length;
       document.getElementById('stats').innerHTML =
         '<div class="stat"><span>کل</span><strong>' + Utils.toPersianDigits(all.length) + '</strong></div>' +
         '<div class="stat"><span>فعال</span><strong>' + Utils.toPersianDigits(active) + '</strong></div>' +
         '<div class="stat"><span>گذشته</span><strong>' + Utils.toPersianDigits(past) + '</strong></div>' +
+        '<div class="stat"><span>بازه</span><strong>' + Utils.toPersianDigits(ranged) + '</strong></div>' +
+        '<div class="stat"><span>مستمر</span><strong>' + Utils.toPersianDigits(ongoing) + '</strong></div>' +
         '<div class="stat"><span>انجام‌شده</span><strong>' + Utils.toPersianDigits(done) + '</strong></div>';
     }
 

@@ -6,6 +6,13 @@
     'مهر','آبان','آذر','دی','بهمن','اسفند'
   ];
 
+  const TIME_TYPES = {
+    single:  { label: 'تک‌روزه',   icon: 'calendar', color: '#f59e0b' },
+    range:   { label: 'بازه',       icon: 'calendar', color: '#8b5cf6' },
+    ongoing: { label: 'مستمر',      icon: 'clock',    color: '#10b981' },
+    tba:     { label: 'نامعلوم',    icon: 'info',     color: '#64748b' }
+  };
+
   const ICONS = {
     plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
     x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
@@ -38,7 +45,8 @@
     clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
     flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>',
     info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
-    sliders: '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>'
+    sliders: '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
+    'arrow-left': '<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>'
   };
 
   function iconSvg(name, size) {
@@ -113,10 +121,126 @@
     }).filter(l => l.url);
   }
 
+  /* ---------------- Timing helpers ---------------- */
+
+  /**
+   * Normalize a raw item's timing fields to be internally consistent.
+   * Returns a shallow-copied object with timeType, date, endDate, time, isDeadline set.
+   */
+  function normalizeTiming(item) {
+    const out = Object.assign({}, item);
+    let tt = out.timeType;
+    if (!tt) {
+      // Infer from legacy shape
+      if (out.date) tt = 'single';
+      else tt = 'tba';
+    }
+    if (!TIME_TYPES[tt]) tt = 'single';
+    out.timeType = tt;
+    out.date = out.date || '';
+    out.endDate = out.endDate || '';
+    out.time = out.time || '';
+    out.isDeadline = !!out.isDeadline;
+    if (tt !== 'range') out.endDate = '';
+    if (tt === 'tba') { out.date = ''; out.endDate = ''; out.time = ''; }
+    return out;
+  }
+
+  /**
+   * Effective end date for priority/sort decisions.
+   * - single → the date
+   * - range → the endDate (or date if endDate is missing)
+   * - ongoing → null (never "past")
+   * - tba → null
+   */
+  function getEffectiveEnd(item) {
+    if (!item || !item.timeType) return item && item.date ? item.date : null;
+    if (item.timeType === 'ongoing' || item.timeType === 'tba') return null;
+    if (item.timeType === 'range') return item.endDate || item.date || null;
+    return item.date || null;
+  }
+
+  /**
+   * Effective start date.
+   */
+  function getEffectiveStart(item) {
+    if (!item) return null;
+    return item.date || null;
+  }
+
+  /**
+   * Human-readable Persian description of the timing.
+   * Examples:
+   *   "۱۵ مهر ۱۴۰۵"
+   *   "از ۱۵ تا ۲۰ مهر ۱۴۰۵"
+   *   "از ۱۵ مهر ۱۴۰۵ به بعد"
+   *   "تاریخ نامعلوم"
+   *   "۱۵ مهر ۱۴۰۵ — ساعت ۱۶:۰۰"
+   */
+  function formatItemTiming(item) {
+    if (!item) return '';
+    const tt = item.timeType || 'single';
+    if (tt === 'tba' || !item.date) return 'تاریخ نامعلوم';
+
+    const start = formatJalaliDate(item.date);
+    const end = item.endDate ? formatJalaliDate(item.endDate) : '';
+
+    let text = start;
+    if (tt === 'range' && end) {
+      text = 'از ' + start + ' تا ' + end;
+    } else if (tt === 'ongoing') {
+      text = 'از ' + start + ' به بعد';
+    }
+    if (item.time) {
+      text += ' — ساعت ' + toPersianDigits(item.time);
+    }
+    return text;
+  }
+
+  function formatJalaliDate(iso) {
+    const j = isoToJalali(iso);
+    if (!j) return '';
+    return toPersianDigits(j[2]) + ' ' + PERSIAN_MONTHS[j[1]-1] + ' ' + toPersianDigits(j[0]);
+  }
+  function formatJalaliShort(iso) {
+    const j = isoToJalali(iso);
+    if (!j) return '';
+    return toPersianDigits(j[0] + '/' + pad2(j[1]) + '/' + pad2(j[2]));
+  }
+  function isoToJalali(iso) {
+    if (!iso) return null;
+    const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return null;
+    return gregorianToJalali(+m[1], +m[2], +m[3]);
+  }
+  function jalaliToIso(jy, jm, jd) {
+    const [gy, gm, gd] = jalaliToGregorian(jy, jm, jd);
+    return gy + '-' + pad2(gm) + '-' + pad2(gd);
+  }
+
+  /**
+   * Enumerate all ISO dates between start and end inclusive.
+   */
+  function enumerateDates(startIso, endIso) {
+    if (!startIso) return [];
+    if (!endIso || endIso < startIso) return [startIso];
+    const out = [];
+    const cur = new Date(startIso + 'T00:00:00');
+    const end = new Date(endIso + 'T00:00:00');
+    let guard = 0;
+    while (cur <= end && guard < 1000) {
+      out.push(cur.getFullYear() + '-' + pad2(cur.getMonth()+1) + '-' + pad2(cur.getDate()));
+      cur.setDate(cur.getDate() + 1);
+      guard++;
+    }
+    return out;
+  }
+
   const Utils = {
     iconSvg,
     ICONS,
     PERSIAN_MONTHS,
+    TIME_TYPES,
     uid() { return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,9); },
     debounce(fn, wait=200) {
       let t;
@@ -133,26 +257,15 @@
     isLeapJalali,
     jalaliMonthDays,
     parseLinks,
-    isoToJalali(iso) {
-      if (!iso) return null;
-      const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
-      if (!m) return null;
-      return gregorianToJalali(+m[1], +m[2], +m[3]);
-    },
-    jalaliToIso(jy, jm, jd) {
-      const [gy, gm, gd] = jalaliToGregorian(jy, jm, jd);
-      return gy + '-' + pad2(gm) + '-' + pad2(gd);
-    },
-    formatJalaliDate(iso) {
-      const j = this.isoToJalali(iso);
-      if (!j) return '';
-      return toPersianDigits(j[2]) + ' ' + PERSIAN_MONTHS[j[1]-1] + ' ' + toPersianDigits(j[0]);
-    },
-    formatJalaliShort(iso) {
-      const j = this.isoToJalali(iso);
-      if (!j) return '';
-      return toPersianDigits(j[0] + '/' + pad2(j[1]) + '/' + pad2(j[2]));
-    },
+    normalizeTiming,
+    getEffectiveEnd,
+    getEffectiveStart,
+    formatItemTiming,
+    isoToJalali,
+    jalaliToIso,
+    formatJalaliDate,
+    formatJalaliShort,
+    enumerateDates,
     todayJalali() {
       const now = new Date();
       const [jy, jm, jd] = gregorianToJalali(now.getFullYear(), now.getMonth()+1, now.getDate());
@@ -167,11 +280,12 @@
       return n.getFullYear() + '-' + pad2(n.getMonth()+1) + '-' + pad2(n.getDate());
     },
     isPastDate(iso) { return !iso ? false : iso < this.todayIso(); },
+    isPastItem(item) {
+      const end = getEffectiveEnd(item);
+      if (!end) return false;
+      return this.isPastDate(end);
+    },
 
-    /**
-     * Auto-convert digits to Persian as user types on any input/textarea
-     * without data-no-persianify.
-     */
     autoPersianify(root) {
       (root || document).querySelectorAll('input[type="text"], input[type="search"], textarea').forEach(el => {
         if (el.hasAttribute('data-no-persianify')) return;

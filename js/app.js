@@ -14,6 +14,7 @@
       this._bindHeader();
       this._bindFilters();
       this._bindModal();
+      this._bindTiming();
       this._bindGuide();
       this._bindBulk();
       this._bindSync();
@@ -43,6 +44,10 @@
         r.onchange = () => { if (r.checked) this.ui.setFilter({ status: r.value }); };
       });
 
+      document.querySelectorAll('input[name="timeTypeFilter"]').forEach(r => {
+        r.onchange = () => { if (r.checked) this.ui.setFilter({ timeType: r.value }); };
+      });
+
       const sortSel = document.getElementById('sortSelect');
       sortSel.value = this.ui.sort;
       sortSel.onchange = (e) => this.ui.setSort(e.target.value);
@@ -55,15 +60,6 @@
       document.getElementById('modalCancel').onclick = close;
       document.getElementById('modalSave').onclick = () => this.saveEditor();
       modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
-
-      // Jalali date picker
-      document.getElementById('itemDateBtn').onclick = () => {
-        const current = document.getElementById('itemDate').value || '';
-        this.calendar.openPicker(current, (iso) => {
-          this._setDate(iso);
-        });
-      };
-      document.getElementById('itemDateClear').onclick = () => this._setDate('');
 
       const sm = document.getElementById('settingsModal');
       const sclose = () => { sm.hidden = true; };
@@ -86,6 +82,38 @@
       const keyInput = document.getElementById('syncKey');
       urlInput.oninput = (e) => { this.store.saveSettings({ syncUrl: e.target.value.trim() }); this._reflectSyncConfig(); };
       keyInput.oninput = (e) => { this.store.saveSettings({ syncKey: e.target.value.trim() }); this._reflectSyncConfig(); };
+    }
+
+    _bindTiming() {
+      // timeType radio changes
+      document.querySelectorAll('input[name="timeType"]').forEach(r => {
+        r.addEventListener('change', () => {
+          if (r.checked) this._applyTimeType(r.value);
+        });
+      });
+
+      // Start date picker
+      document.getElementById('itemDateBtn').onclick = () => {
+        const current = document.getElementById('itemDate').value || '';
+        const isRange = this._getTimeType() === 'range';
+        this.calendar.openPicker(current, (iso) => {
+          this._setStartDate(iso);
+        }, { title: isRange ? 'انتخاب تاریخ شروع' : 'انتخاب تاریخ' });
+      };
+      document.getElementById('itemDateClear').onclick = () => this._setStartDate('');
+
+      // End date picker
+      document.getElementById('itemEndDateBtn').onclick = () => {
+        const startIso = document.getElementById('itemDate').value || '';
+        const currentEnd = document.getElementById('itemEndDate').value || '';
+        this.calendar.openPicker(currentEnd || startIso, (iso) => {
+          this._setEndDate(iso);
+        }, { title: 'انتخاب تاریخ پایان' });
+      };
+      document.getElementById('itemEndDateClear').onclick = () => this._setEndDate('');
+
+      // Auto-persianify time input digits
+      Utils.autoPersianify(document.getElementById('itemTime') ? document.getElementById('itemTime').parentNode : document);
     }
 
     _bindGuide() {
@@ -154,7 +182,50 @@
       }
     }
 
-    _setDate(iso) {
+    /* ---------- Timing UI helpers ---------- */
+
+    _getTimeType() {
+      const el = document.querySelector('input[name="timeType"]:checked');
+      return el ? el.value : 'single';
+    }
+
+    _setTimeType(tt) {
+      const el = document.querySelector('input[name="timeType"][value="' + tt + '"]');
+      if (el) el.checked = true;
+      this._applyTimeType(tt);
+    }
+
+    _applyTimeType(tt) {
+      const startLabel = document.getElementById('dateStartLabel');
+      const startLabelText = document.getElementById('dateStartLabelText');
+      const endLabel = document.getElementById('dateEndLabel');
+      const timeWrap = document.getElementById('itemTime');
+
+      // Reset end date when leaving range mode
+      if (tt !== 'range') {
+        const currentEnd = document.getElementById('itemEndDate').value;
+        if (currentEnd) this._setEndDate('');
+      }
+
+      if (tt === 'tba') {
+        // Hide start and end
+        startLabel.hidden = true;
+        endLabel.hidden = true;
+        this._setStartDate('');
+        timeWrap.disabled = true;
+        timeWrap.parentNode.style.opacity = '0.5';
+      } else {
+        startLabel.hidden = false;
+        endLabel.hidden = (tt !== 'range');
+        timeWrap.disabled = false;
+        timeWrap.parentNode.style.opacity = '1';
+        if (tt === 'range') startLabelText.textContent = 'تاریخ شروع';
+        else if (tt === 'ongoing') startLabelText.textContent = 'تاریخ شروع';
+        else startLabelText.textContent = 'تاریخ';
+      }
+    }
+
+    _setStartDate(iso) {
       const hidden = document.getElementById('itemDate');
       const btnText = document.getElementById('itemDateText');
       const btn = document.getElementById('itemDateBtn');
@@ -175,11 +246,36 @@
       }
     }
 
+    _setEndDate(iso) {
+      const hidden = document.getElementById('itemEndDate');
+      const btnText = document.getElementById('itemEndDateText');
+      const btn = document.getElementById('itemEndDateBtn');
+      const clearBtn = document.getElementById('itemEndDateClear');
+
+      hidden.value = iso || '';
+      if (iso) {
+        const jalali = Utils.formatJalaliDate(iso);
+        const short = Utils.formatJalaliShort(iso);
+        btnText.textContent = jalali + ' (' + short + ')';
+        btn.classList.remove('empty');
+        clearBtn.hidden = false;
+      } else {
+        btnText.textContent = 'انتخاب تاریخ…';
+        btn.classList.add('empty');
+        clearBtn.hidden = true;
+      }
+    }
+
+    /* ---------- Editor ---------- */
+
     openEditor(id) {
       const modal = document.getElementById('modal');
       const editing = !!id;
       document.getElementById('modalTitle').textContent = editing ? 'ویرایش کار' : 'کار جدید';
       const item = editing ? this.store.get(id) : null;
+
+      const tt = item ? (item.timeType || 'single') : 'single';
+
       document.getElementById('itemId').value = id || '';
       document.getElementById('itemTitle').value = item ? item.title : '';
       document.getElementById('itemDesc').value = item ? (item.description || '') : '';
@@ -189,7 +285,13 @@
         ? (item.links || []).map(l => l.label && l.label !== l.url ? (l.label + ' | ' + l.url) : l.url).join('\n')
         : '';
       document.getElementById('itemDone').checked = item ? !!item.done : false;
-      this._setDate(item ? (item.date || '') : '');
+      document.getElementById('itemTime').value = item ? (item.time || '') : '';
+      document.getElementById('itemIsDeadline').checked = item ? !!item.isDeadline : false;
+
+      this._setTimeType(tt);
+      this._setStartDate(item ? (item.date || '') : '');
+      this._setEndDate(item ? (item.endDate || '') : '');
+
       modal.hidden = false;
       setTimeout(() => document.getElementById('itemTitle').focus(), 30);
     }
@@ -198,23 +300,58 @@
       const id = document.getElementById('itemId').value;
       const title = document.getElementById('itemTitle').value.trim();
       if (!title) { Utils.toast('عنوان الزامی است'); return; }
+
+      const timeType = this._getTimeType();
+      let startDate = document.getElementById('itemDate').value || '';
+      let endDate = document.getElementById('itemEndDate').value || '';
+
+      // Validation
+      if (timeType === 'range') {
+        if (!startDate) { Utils.toast('تاریخ شروع را انتخاب کنید'); return; }
+        if (endDate && endDate < startDate) {
+          Utils.toast('تاریخ پایان باید بعد از شروع باشد');
+          return;
+        }
+        if (!endDate) {
+          // Auto-fill with start date if user forgot
+          endDate = startDate;
+        }
+      }
+
+      if (timeType === 'tba') {
+        startDate = '';
+        endDate = '';
+      } else if (timeType === 'single' || timeType === 'ongoing') {
+        endDate = '';
+      }
+
       const tags = Utils.toLatinDigits(document.getElementById('itemTags').value)
         .split(/[,،]/).map(t => t.trim()).filter(Boolean);
       const links = Utils.parseLinks(document.getElementById('itemLinks').value);
+
+      const time = document.getElementById('itemTime').value || '';
+
       const data = {
         title,
         description: document.getElementById('itemDesc').value.trim(),
         category: document.getElementById('itemCategory').value.trim(),
-        date: document.getElementById('itemDate').value,
         tags,
         links,
-        done: document.getElementById('itemDone').checked
+        done: document.getElementById('itemDone').checked,
+        timeType,
+        date: startDate,
+        endDate,
+        time,
+        isDeadline: document.getElementById('itemIsDeadline').checked
       };
+
       if (id) this.store.update(id, data);
       else this.store.add(data);
       document.getElementById('modal').hidden = true;
       Utils.toast(id ? 'ویرایش شد' : 'اضافه شد');
     }
+
+    /* ---------- Settings & Guide ---------- */
 
     openSettings() {
       const s = this.store.getSettings();
@@ -228,8 +365,15 @@
 
     openGuide() { document.getElementById('guideModal').hidden = false; }
 
+    /* ---------- Import / Export ---------- */
+
     export() {
-      const data = { version: 1, exportedAt: new Date().toISOString(), items: this.store.list() };
+      const data = {
+        version: 2,
+        schemaVersion: 2,
+        exportedAt: new Date().toISOString(),
+        items: this.store.list()
+      };
       Utils.download('works-' + Date.now() + '.json', JSON.stringify(data, null, 2));
       Utils.toast('خروجی گرفته شد');
     }
@@ -252,6 +396,8 @@
       } catch (err) { Utils.toast('خطا: ' + err.message); }
       e.target.value = '';
     }
+
+    /* ---------- Sync ---------- */
 
     async testConnection() {
       try {

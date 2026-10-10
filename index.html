@@ -76,6 +76,16 @@
         </div>
       </div>
       <div class="filter-section">
+        <h3><span class="icon" data-icon="clock"></span> نوع زمان‌بندی</h3>
+        <div class="radio-group timing-filter-group">
+          <label class="radio-pill"><input type="radio" name="timeTypeFilter" value="" checked><span>همه</span></label>
+          <label class="radio-pill"><input type="radio" name="timeTypeFilter" value="single"><span>تک</span></label>
+          <label class="radio-pill"><input type="radio" name="timeTypeFilter" value="range"><span>بازه</span></label>
+          <label class="radio-pill"><input type="radio" name="timeTypeFilter" value="ongoing"><span>مستمر</span></label>
+          <label class="radio-pill"><input type="radio" name="timeTypeFilter" value="tba"><span>نامعلوم</span></label>
+        </div>
+      </div>
+      <div class="filter-section">
         <h3><span class="icon" data-icon="sort"></span> مرتب‌سازی</h3>
         <select id="sortSelect">
           <option value="date-asc">تاریخ (نزدیک‌ترین)</option>
@@ -128,25 +138,62 @@
           <span>توضیحات</span>
           <textarea id="itemDesc" rows="3" placeholder="توضیحات اختیاری…"></textarea>
         </label>
-        <div class="grid-2">
-          <label>
-            <span><span class="icon" data-icon="tag"></span> دسته‌بندی</span>
-            <input type="text" id="itemCategory" placeholder="مثلاً: پژوهش">
-          </label>
-          <label>
-            <span><span class="icon" data-icon="calendar"></span> تاریخ</span>
-            <div class="jalali-field-wrap">
-              <button type="button" class="jalali-field" id="itemDateBtn">
-                <span class="icon" data-icon="calendar"></span>
-                <span id="itemDateText">انتخاب تاریخ…</span>
-              </button>
-              <button type="button" class="icon-btn jalali-clear-btn" id="itemDateClear" hidden title="پاک کردن تاریخ">
-                <span data-icon="x"></span>
-              </button>
-            </div>
-            <input type="hidden" id="itemDate">
-          </label>
+        <label>
+          <span><span class="icon" data-icon="tag"></span> دسته‌بندی</span>
+          <input type="text" id="itemCategory" placeholder="مثلاً: پژوهش">
+        </label>
+
+        <div class="timing-block">
+          <span class="timing-title"><span class="icon" data-icon="clock"></span> زمان‌بندی</span>
+          <div class="timing-types">
+            <label class="radio-pill"><input type="radio" name="timeType" value="single" checked><span>تک‌روزه</span></label>
+            <label class="radio-pill"><input type="radio" name="timeType" value="range"><span>بازه</span></label>
+            <label class="radio-pill"><input type="radio" name="timeType" value="ongoing"><span>مستمر</span></label>
+            <label class="radio-pill"><input type="radio" name="timeType" value="tba"><span>بدون تاریخ</span></label>
+          </div>
+
+          <div class="grid-2 timing-dates">
+            <label id="dateStartLabel">
+              <span><span class="icon" data-icon="calendar"></span> <span id="dateStartLabelText">تاریخ</span></span>
+              <div class="jalali-field-wrap">
+                <button type="button" class="jalali-field" id="itemDateBtn">
+                  <span class="icon" data-icon="calendar"></span>
+                  <span id="itemDateText">انتخاب تاریخ…</span>
+                </button>
+                <button type="button" class="icon-btn jalali-clear-btn" id="itemDateClear" hidden title="پاک کردن">
+                  <span data-icon="x"></span>
+                </button>
+              </div>
+              <input type="hidden" id="itemDate">
+            </label>
+
+            <label id="dateEndLabel" hidden>
+              <span><span class="icon" data-icon="calendar"></span> تاریخ پایان</span>
+              <div class="jalali-field-wrap">
+                <button type="button" class="jalali-field" id="itemEndDateBtn">
+                  <span class="icon" data-icon="calendar"></span>
+                  <span id="itemEndDateText">انتخاب تاریخ…</span>
+                </button>
+                <button type="button" class="icon-btn jalali-clear-btn" id="itemEndDateClear" hidden title="پاک کردن">
+                  <span data-icon="x"></span>
+                </button>
+              </div>
+              <input type="hidden" id="itemEndDate">
+            </label>
+          </div>
+
+          <div class="grid-2 timing-extras">
+            <label>
+              <span><span class="icon" data-icon="clock"></span> ساعت (اختیاری)</span>
+              <input type="time" id="itemTime" dir="ltr">
+            </label>
+            <label class="checkbox deadline-check">
+              <input type="checkbox" id="itemIsDeadline">
+              <span><span class="icon" data-icon="alert"></span> این یک مهلت است</span>
+            </label>
+          </div>
         </div>
+
         <label>
           <span><span class="icon" data-icon="hash"></span> برچسب‌ها</span>
           <input type="text" id="itemTags" placeholder="با کاما جدا کنید">

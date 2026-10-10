@@ -203,7 +203,7 @@ body {
   box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
 }
 
-.radio-group { display: flex; gap: 6px; }
+.radio-group { display: flex; gap: 6px; flex-wrap: wrap; }
 .radio-pill {
   flex: 1;
   display: flex;
@@ -217,6 +217,7 @@ body {
   background: rgba(255,255,255,0.35);
   transition: all 0.15s;
   user-select: none;
+  min-width: 60px;
 }
 .radio-pill input { display: none; }
 .radio-pill:has(input:checked) {
@@ -225,6 +226,7 @@ body {
   border-color: transparent;
   box-shadow: 0 4px 12px rgba(99,102,241,0.35);
 }
+.timing-filter-group .radio-pill { min-width: 40px; padding: 6px 6px; font-size: 0.72rem; }
 
 .stats { display: flex; flex-direction: column; gap: 8px; }
 .stats .stat {
@@ -275,6 +277,9 @@ body {
 .item.done .item-title { text-decoration: line-through; color: var(--muted); }
 .item.past { border-color: rgba(245, 158, 11, 0.4); }
 .item.past:not(.done) { background: rgba(255, 251, 235, 0.55); }
+.item.ongoing { border-color: rgba(16, 185, 129, 0.35); }
+.item.ongoing:not(.done) { background: rgba(240, 253, 244, 0.5); }
+.item.range { border-color: rgba(139, 92, 246, 0.35); }
 .item.selected { border-color: var(--primary); background: rgba(224, 231, 255, 0.7); box-shadow: 0 0 0 3px rgba(99,102,241,0.15), var(--glass-shadow); }
 
 .item-checkbox { padding-top: 4px; cursor: pointer; }
@@ -304,9 +309,13 @@ body {
 .item-meta .chip.category { background: rgba(224,231,255,0.7); border-color: rgba(165,180,252,0.6); color: #4338ca; }
 .item-meta .chip.date { background: rgba(254,243,199,0.75); border-color: rgba(253,230,138,0.7); color: #92400e; font-weight: 700; }
 .item-meta .chip.date.past { background: rgba(254,226,226,0.75); border-color: rgba(252,165,165,0.7); color: #991b1b; }
+.item-meta .chip.date.range { background: rgba(237,233,254,0.8); border-color: rgba(196,181,253,0.7); color: #5b21b6; }
+.item-meta .chip.date.ongoing { background: rgba(209,250,229,0.8); border-color: rgba(167,243,208,0.7); color: #065f46; }
+.item-meta .chip.date.tba { background: rgba(226,232,240,0.8); border-color: rgba(203,213,225,0.7); color: #475569; font-weight: 500; }
 .item-meta .chip.tag { background: rgba(220,252,231,0.7); border-color: rgba(187,247,208,0.7); color: #166534; }
 .item-meta .chip.link { background: rgba(219,234,254,0.75); border-color: rgba(191,219,254,0.8); color: #1d4ed8; cursor: pointer; }
 .item-meta .chip.link:hover { background: rgba(191,219,254,0.9); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(29,78,216,0.2); }
+.item-meta .chip.deadline-badge { background: rgba(254,226,226,0.85); border-color: rgba(252,165,165,0.8); color: #991b1b; font-weight: 700; }
 
 .item-actions { display: flex; gap: 2px; }
 .item-actions .icon-btn { width: 32px; height: 32px; }
@@ -372,6 +381,7 @@ body {
 .modal-body input[type="text"],
 .modal-body input[type="url"],
 .modal-body input[type="password"],
+.modal-body input[type="time"],
 .modal-body textarea,
 .modal-body select {
   width: 100%;
@@ -393,7 +403,7 @@ body {
 .modal-body textarea { resize: vertical; min-height: 60px; }
 .modal-body .checkbox { display: flex; align-items: center; gap: 10px; margin-bottom: 0; cursor: pointer; }
 .modal-body .checkbox input { width: auto; accent-color: var(--primary); }
-.modal-body .checkbox > span { margin-bottom: 0; font-size: 0.9rem; font-weight: 500; }
+.modal-body .checkbox > span { margin-bottom: 0; font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; gap: 6px; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .modal-body hr { border: none; border-top: 1px solid var(--glass-border-2); margin: 22px 0; }
 .modal-body h3 { font-size: 0.95rem; margin-bottom: 10px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
@@ -408,6 +418,37 @@ body {
   background: rgba(255,255,255,0.6);
   backdrop-filter: blur(20px);
   border-radius: 0 0 20px 20px;
+}
+
+/* Timing block inside editor */
+.timing-block {
+  background: rgba(255,255,255,0.4);
+  border: 1px solid var(--glass-border-2);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.timing-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+.timing-title .icon { width: 14px; height: 14px; color: var(--primary); }
+.timing-types { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.timing-types .radio-pill { min-width: 70px; font-size: 0.78rem; }
+.timing-dates { margin-bottom: 0 !important; }
+.timing-dates label { margin-bottom: 14px; }
+.timing-extras { margin-top: 0; }
+.timing-extras label { margin-bottom: 0; }
+.deadline-check {
+  padding-top: 24px;
+}
+@media (max-width: 720px) {
+  .deadline-check { padding-top: 0; }
 }
 
 .jalali-field-wrap { display: flex; gap: 6px; align-items: center; }
@@ -585,6 +626,10 @@ body {
 }
 .cal-cell.is-selected .cal-day-num { color: #fff; }
 .cal-cell.is-selected .cal-more { color: rgba(255,255,255,0.9); }
+.cal-cell.in-range {
+  background: linear-gradient(180deg, rgba(237,233,254,0.5), rgba(237,233,254,0.3));
+  border-color: rgba(196,181,253,0.5);
+}
 
 .cal-day-num { font-size: 0.9rem; font-weight: 700; color: var(--text); line-height: 1; }
 
@@ -667,7 +712,9 @@ body {
 }
 .cal-event-color { width: 4px; align-self: stretch; border-radius: 4px; flex-shrink: 0; min-height: 24px; }
 .cal-event-main { flex: 1; min-width: 0; }
-.cal-event-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; word-break: break-word; }
+.cal-event-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; word-break: break-word; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.cal-event-title .event-time-badge { font-size: 0.68rem; padding: 2px 7px; border-radius: 8px; background: rgba(99,102,241,0.15); color: #4f46e5; font-weight: 600; }
+.cal-event-title .event-range-badge { font-size: 0.68rem; padding: 2px 7px; border-radius: 8px; background: rgba(139,92,246,0.15); color: #6d28d9; font-weight: 600; }
 .cal-event-desc {
   font-size: 0.8rem;
   color: var(--muted);
@@ -719,4 +766,5 @@ body {
   .cal-month-label { font-size: 1rem; min-width: 140px; }
   .cal-legend { font-size: 0.66rem; }
   .cal-event-desc { font-size: 0.75rem; }
+  .timing-types .radio-pill { min-width: 60px; font-size: 0.72rem; padding: 6px 6px; }
 }
