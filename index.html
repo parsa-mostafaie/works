@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6366f1">
-  <title>🧩 کارها</title>
+  <title>کارها</title>
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,9 +12,18 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="app-header">
+  <div class="bg-orbs" aria-hidden="true">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+  </div>
+
+  <header class="app-header glass">
     <div class="header-left">
-      <h1>🧩 کارها</h1>
+      <div class="brand">
+        <span class="brand-icon" data-icon="layers"></span>
+        <h1>کارها</h1>
+      </div>
       <span class="sync-status" title="وضعیت همگام‌سازی">
         <span class="dot" id="syncDot"></span>
         <span id="syncText">آماده</span>
@@ -22,88 +31,95 @@
     </div>
     <div class="header-right">
       <button class="btn btn-primary" id="addBtn" title="افزودن کار جدید (Ctrl+N)">
-        <span class="icon">➕</span> افزودن کار
+        <span class="icon" data-icon="plus"></span>
+        <span>افزودن</span>
       </button>
       <button class="btn" id="importBtn" title="ورود از فایل JSON">
-        <span class="icon">📥</span> ورود
+        <span class="icon" data-icon="import"></span>
       </button>
-      <button class="btn" id="exportBtn" title="ذخیره در فایل JSON">
-        <span class="icon">📤</span> خروجی
+      <button class="btn" id="exportBtn" title="خروجی به فایل JSON">
+        <span class="icon" data-icon="export"></span>
       </button>
-      <button class="btn" id="syncBtn" title="همگام‌سازی با فضای ابری">
-        <span class="icon">☁️</span> همگام‌سازی
+      <button class="btn" id="syncBtn" title="همگام‌سازی ابری">
+        <span class="icon" data-icon="cloud"></span>
       </button>
-      <button class="btn icon-only" id="settingsBtn" title="تنظیمات (⚙️)">
-        ⚙️
+      <button class="btn" id="settingsBtn" title="تنظیمات">
+        <span class="icon" data-icon="settings"></span>
       </button>
     </div>
   </header>
 
   <main class="app-main">
-    <aside class="sidebar">
+    <aside class="sidebar glass">
       <div class="filter-section">
-        <h3>🔍 جستجو</h3>
-        <input type="text" id="searchInput" placeholder="جستجو در عنوان، توضیحات، برچسب‌ها…">
+        <h3><span class="icon" data-icon="search"></span> جستجو</h3>
+        <div class="input-wrap">
+          <span class="input-icon" data-icon="search"></span>
+          <input type="text" id="searchInput" placeholder="جستجو…">
+        </div>
       </div>
       <div class="filter-section">
-        <h3>🏷️ دسته‌بندی</h3>
+        <h3><span class="icon" data-icon="tag"></span> دسته‌بندی</h3>
         <select id="categoryFilter">
           <option value="">همه دسته‌ها</option>
         </select>
       </div>
       <div class="filter-section">
-        <h3>✅ وضعیت</h3>
-        <label><input type="radio" name="status" value="" checked> همه</label>
-        <label><input type="radio" name="status" value="active"> فعال</label>
-        <label><input type="radio" name="status" value="done"> انجام‌شده</label>
+        <h3><span class="icon" data-icon="filter"></span> وضعیت</h3>
+        <div class="radio-group">
+          <label class="radio-pill"><input type="radio" name="status" value="" checked><span>همه</span></label>
+          <label class="radio-pill"><input type="radio" name="status" value="active"><span>فعال</span></label>
+          <label class="radio-pill"><input type="radio" name="status" value="done"><span>انجام‌شده</span></label>
+        </div>
       </div>
       <div class="filter-section">
-        <h3>🔀 مرتب‌سازی</h3>
+        <h3><span class="icon" data-icon="sort"></span> مرتب‌سازی</h3>
         <select id="sortSelect">
-          <option value="date-asc">📅 تاریخ (نزدیک‌ترین)</option>
-          <option value="date-desc">📅 تاریخ (دورترین)</option>
-          <option value="updated-desc">🕒 آخرین ویرایش</option>
-          <option value="updated-asc">🕒 قدیمی‌ترین ویرایش</option>
-          <option value="title-asc">🔤 عنوان (الفبا)</option>
+          <option value="date-asc">تاریخ (نزدیک‌ترین)</option>
+          <option value="date-desc">تاریخ (دورترین)</option>
+          <option value="updated-desc">آخرین ویرایش</option>
+          <option value="updated-asc">قدیمی‌ترین ویرایش</option>
+          <option value="title-asc">عنوان (الفبا)</option>
         </select>
       </div>
       <div class="filter-section">
-        <h3>📊 آمار</h3>
+        <h3><span class="icon" data-icon="chart"></span> آمار</h3>
         <div class="stats" id="stats"></div>
       </div>
     </aside>
 
     <section class="content">
-      <div class="bulk-bar" id="bulkBar" hidden>
+      <div class="bulk-bar glass" id="bulkBar" hidden>
         <span id="selectedCount">۰ انتخاب‌شده</span>
         <div class="bulk-actions">
-          <button class="btn btn-sm" id="bulkDone"><span class="icon">✓</span> انجام‌شده</button>
-          <button class="btn btn-sm" id="bulkUndone"><span class="icon">↺</span> فعال</button>
-          <button class="btn btn-sm btn-danger" id="bulkDelete"><span class="icon">🗑</span> حذف</button>
-          <button class="btn btn-sm" id="bulkClear"><span class="icon">✕</span> پاک‌کردن</button>
+          <button class="btn btn-sm" id="bulkDone"><span class="icon" data-icon="check"></span> انجام‌شده</button>
+          <button class="btn btn-sm" id="bulkUndone"><span class="icon" data-icon="undo"></span> فعال</button>
+          <button class="btn btn-sm btn-danger" id="bulkDelete"><span class="icon" data-icon="trash"></span> حذف</button>
+          <button class="btn btn-sm" id="bulkClear"><span class="icon" data-icon="x"></span></button>
         </div>
       </div>
 
       <div class="list" id="list"></div>
-      <div class="empty" id="empty" hidden>
-        <div class="empty-icon">🗂️</div>
-        <div class="empty-text">هنوز کاری اضافه نشده است.</div>
-        <div class="empty-hint">برای شروع، روی «افزودن کار» کلیک کنید.</div>
+
+      <div class="empty glass" id="empty" hidden>
+        <div class="empty-icon" data-icon="inbox"></div>
+        <div class="empty-text">هنوز کاری اضافه نشده</div>
+        <div class="empty-hint">برای شروع، روی «افزودن» کلیک کنید</div>
       </div>
     </section>
   </main>
 
   <div class="modal" id="modal" hidden>
-    <div class="modal-content">
+    <div class="modal-content glass-strong">
       <div class="modal-header">
         <h2 id="modalTitle">کار جدید</h2>
-        <button class="icon-btn" id="modalClose" title="بستن">✕</button>
+        <button class="icon-btn" id="modalClose" title="بستن"><span data-icon="x"></span></button>
       </div>
       <form id="itemForm" class="modal-body" onsubmit="return false;">
         <input type="hidden" id="itemId">
         <label>
           <span>عنوان <span class="req">*</span></span>
-          <input type="text" id="itemTitle" required placeholder="عنوان کار را وارد کنید">
+          <input type="text" id="itemTitle" required placeholder="عنوان کار">
         </label>
         <label>
           <span>توضیحات</span>
@@ -111,22 +127,22 @@
         </label>
         <div class="grid-2">
           <label>
-            <span>🏷️ دسته‌بندی</span>
-            <input type="text" id="itemCategory" placeholder="مثلاً: پژوهش، ادبی، فنی">
+            <span><span class="icon" data-icon="tag"></span> دسته‌بندی</span>
+            <input type="text" id="itemCategory" placeholder="مثلاً: پژوهش">
           </label>
           <label>
-            <span>📅 تاریخ</span>
+            <span><span class="icon" data-icon="calendar"></span> تاریخ</span>
             <input type="date" id="itemDate">
             <small id="itemDatePreview" class="date-preview"></small>
           </label>
         </div>
         <label>
-          <span>🔖 برچسب‌ها</span>
-          <input type="text" id="itemTags" placeholder="با کاما جدا کنید: برچسب۱، برچسب۲">
+          <span><span class="icon" data-icon="hash"></span> برچسب‌ها</span>
+          <input type="text" id="itemTags" placeholder="با کاما جدا کنید">
         </label>
         <label>
-          <span>🔗 پیوندها <small class="help-inline">(هر خط یک پیوند — فرمت: <code>عنوان | آدرس</code> یا فقط <code>آدرس</code>)</small></span>
-          <textarea id="itemLinks" rows="3" placeholder="مثال:&#10;سایت رسمی | https://example.com&#10;https://another.example.com"></textarea>
+          <span><span class="icon" data-icon="link"></span> پیوندها <small class="help-inline">هر خط یک پیوند — <code>عنوان | آدرس</code> یا فقط آدرس</small></span>
+          <textarea id="itemLinks" rows="3" placeholder="سایت رسمی | https://example.com"></textarea>
         </label>
         <label class="checkbox">
           <input type="checkbox" id="itemDone">
@@ -135,75 +151,75 @@
       </form>
       <div class="modal-footer">
         <button class="btn" id="modalCancel">انصراف</button>
-        <button class="btn btn-primary" id="modalSave"><span class="icon">💾</span> ذخیره</button>
+        <button class="btn btn-primary" id="modalSave"><span class="icon" data-icon="save"></span> ذخیره</button>
       </div>
     </div>
   </div>
 
   <div class="modal" id="settingsModal" hidden>
-    <div class="modal-content">
+    <div class="modal-content glass-strong">
       <div class="modal-header">
-        <h2>⚙️ تنظیمات و همگام‌سازی</h2>
-        <button class="icon-btn" id="settingsClose" title="بستن">✕</button>
+        <h2><span class="icon" data-icon="settings"></span> تنظیمات و همگام‌سازی</h2>
+        <button class="icon-btn" id="settingsClose"><span data-icon="x"></span></button>
       </div>
       <div class="modal-body">
         <div class="setup-callout">
           <div class="setup-callout-text">
-            <strong>🔑 اولین بار است؟</strong>
-            <span>راهنمای راه‌اندازی را باز کنید تا در ۳ دقیقه توکن و Gist بسازید.</span>
+            <strong>اولین بار است؟</strong>
+            <span>راه‌اندازی توکن و Gist در ۳ دقیقه</span>
           </div>
-          <button class="btn btn-sm btn-primary" id="openGuideBtn">📖 راهنمای راه‌اندازی</button>
+          <button class="btn btn-sm btn-primary" id="openGuideBtn"><span class="icon" data-icon="book"></span> راهنما</button>
         </div>
 
-        <h3>☁️ همگام‌سازی ابری (GitHub Gist)</h3>
-        <p class="help">کارها را از طریق یک Gist خصوصی در GitHub بین دستگاه‌ها همگام کنید. <strong>در ایران بدون فیلترشکن کار می‌کند.</strong></p>
+        <h3><span class="icon" data-icon="cloud"></span> همگام‌سازی ابری (GitHub Gist)</h3>
+        <p class="help">در ایران بدون فیلترشکن کار می‌کند.</p>
 
         <label>
           <span>شناسه یا آدرس Gist</span>
-          <input type="text" id="syncUrl" placeholder="a1b2c3d4e5f6  یا  https://gist.github.com/user/a1b2c3d4e5f6" dir="ltr">
+          <input type="text" id="syncUrl" placeholder="a1b2c3d4e5f6 یا URL کامل" dir="ltr">
         </label>
         <label>
           <span>توکن GitHub</span>
-          <input type="password" id="syncKey" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" dir="ltr">
+          <input type="password" id="syncKey" placeholder="ghp_xxxx" dir="ltr">
         </label>
 
         <div class="row-actions">
-          <button class="btn" id="testConnBtn"><span class="icon">🔌</span> آزمایش اتصال</button>
-          <button class="btn btn-primary" id="syncNowBtn"><span class="icon">☁️</span> همگام‌سازی الان</button>
-          <button class="btn" id="openGuideBtn2"><span class="icon">📖</span> راهنما</button>
+          <button class="btn" id="testConnBtn"><span class="icon" data-icon="plug"></span> آزمایش اتصال</button>
+          <button class="btn btn-primary" id="syncNowBtn"><span class="icon" data-icon="refresh"></span> همگام‌سازی</button>
+          <button class="btn" id="openGuideBtn2"><span class="icon" data-icon="book"></span> راهنما</button>
         </div>
 
         <p class="status-text" id="syncStatusText"></p>
         <hr>
-        <h3>🗄️ داده‌ها</h3>
-        <button class="btn btn-danger" id="clearAllBtn"><span class="icon">⚠️</span> پاک‌کردن همه داده‌ها</button>
+        <h3><span class="icon" data-icon="database"></span> داده‌ها</h3>
+        <button class="btn btn-danger" id="clearAllBtn"><span class="icon" data-icon="alert"></span> پاک‌کردن همه داده‌ها</button>
       </div>
     </div>
   </div>
 
   <div class="modal" id="guideModal" hidden>
-    <div class="modal-content">
+    <div class="modal-content glass-strong">
       <div class="modal-header">
-        <h2>📖 راه‌اندازی همگام‌سازی</h2>
-        <button class="icon-btn" id="guideClose" title="بستن">✕</button>
+        <h2><span class="icon" data-icon="book"></span> راه‌اندازی همگام‌سازی</h2>
+        <button class="icon-btn" id="guideClose"><span data-icon="x"></span></button>
       </div>
       <div class="modal-body guide-body">
-        <p class="guide-intro">این ۵ مرحله را یک‌بار برای هر حساب GitHub انجام دهید. سپس همه دستگاه‌ها داده‌ی یکسان خواهند داشت.</p>
+        <p class="guide-intro">۵ مرحله، یک‌بار برای هر حساب GitHub. سپس همه دستگاه‌ها داده‌ی یکسان خواهند داشت.</p>
 
         <div class="guide-step">
           <div class="step-num">۱</div>
           <div class="step-body">
-            <h3>ساخت توکن دسترسی شخصی</h3>
-            <p>فقط دسترسی <code>gist</code> لازم است. رایگان و حدود ۳۰ ثانیه طول می‌کشد.</p>
-            <a class="btn btn-sm btn-primary" href="https://github.com/settings/tokens/new?scopes=gist&description=Works+Sync" target="_blank" rel="noopener">باز کردن صفحه ساخت توکن در GitHub ↗</a>
+            <h3>ساخت توکن دسترسی</h3>
+            <p>فقط دسترسی <code>gist</code> کافی است.</p>
+            <a class="btn btn-sm btn-primary" href="https://github.com/settings/tokens/new?scopes=gist&description=Works+Sync" target="_blank" rel="noopener">باز کردن صفحه توکن <span class="icon" data-icon="external"></span></a>
           </div>
         </div>
 
         <div class="guide-step">
           <div class="step-num">۲</div>
           <div class="step-body">
-            <h3>کپی کردن توکن</h3>
-            <p>شبیه این است: <code dir="ltr">ghp_xxxxxxxxxxxxxxxxxxxx</code> — مثل رمز عبور از آن محافظت کنید.</p>
+            <h3>کپی توکن</h3>
+            <p>شبیه <code dir="ltr">ghp_xxxxxxxxxxxx</code> — مثل رمز از آن محافظت کنید.</p>
           </div>
         </div>
 
@@ -211,17 +227,16 @@
           <div class="step-num">۳</div>
           <div class="step-body">
             <h3>ساخت Gist مخفی</h3>
-            <p>نام فایل را <code dir="ltr">works.json</code> بگذارید و محتوای آن را <code dir="ltr">[]</code> (آرایه خالی) قرار دهید. روی <strong>Create secret gist</strong> کلیک کنید.</p>
-            <a class="btn btn-sm" href="https://gist.github.com/" target="_blank" rel="noopener">باز کردن GitHub Gist ↗</a>
+            <p>نام فایل: <code dir="ltr">works.json</code> — محتوا: <code dir="ltr">[]</code></p>
+            <a class="btn btn-sm" href="https://gist.github.com/" target="_blank" rel="noopener">باز کردن Gist <span class="icon" data-icon="external"></span></a>
           </div>
         </div>
 
         <div class="guide-step">
           <div class="step-num">۴</div>
           <div class="step-body">
-            <h3>کپی کردن شناسه Gist</h3>
-            <p>از آدرس Gist: <code dir="ltr">gist.github.com/USER/<mark>GIST-ID</mark></code></p>
-            <p class="help">می‌توانید کل آدرس را در برنامه جای‌گذاری کنید — شناسه به‌طور خودکار استخراج می‌شود.</p>
+            <h3>کپی شناسه Gist</h3>
+            <p>از آدرس: <code dir="ltr">gist.github.com/USER/<mark>GIST-ID</mark></code></p>
           </div>
         </div>
 
@@ -229,20 +244,20 @@
           <div class="step-num">۵</div>
           <div class="step-body">
             <h3>جای‌گذاری و آزمایش</h3>
-            <p>به <strong>تنظیمات</strong> برگردید: شناسه Gist و توکن را جای‌گذاری کنید، سپس روی <strong>آزمایش اتصال</strong> بزنید. اگر موفق بود، <strong>همگام‌سازی الان</strong> را بزنید. تمام.</p>
+            <p>در تنظیمات، شناسه و توکن را وارد کرده و روی «آزمایش اتصال» بزنید.</p>
           </div>
         </div>
 
         <div class="setup-callout tip">
-          <strong>💡 نکته امنیتی:</strong>
-          <span>Gist «مخفی» در نتایج جستجو نمایش داده نمی‌شود، اما هرکس آدرس را داشته باشد می‌تواند آن را ببیند. رمز یا اطلاعات حساس در کارها قرار ندهید.</span>
+          <strong><span class="icon" data-icon="shield"></span> نکته امنیتی</strong>
+          <span>Gist «مخفی» در جستجو دیده نمی‌شود اما هرکس آدرس را بداند می‌تواند ببیند. اطلاعات حساس قرار ندهید.</span>
         </div>
       </div>
     </div>
   </div>
 
   <input type="file" id="fileInput" accept=".json,application/json" hidden>
-  <div class="toast" id="toast" hidden></div>
+  <div class="toast glass" id="toast" hidden></div>
 
   <script src="js/utils.js"></script>
   <script src="js/storage.js"></script>

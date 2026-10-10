@@ -1,14 +1,14 @@
 {
   "name": "کارها",
   "short_name": "کارها",
-  "description": "مدیریت کارها با ویرایش زنده، پیوندها، تاریخ شمسی و همگام‌سازی ابری از طریق GitHub Gist",
+  "description": "مدیریت کارها با استایل شیشه‌ای، آیکون‌های مدرن، تاریخ شمسی و همگام‌سازی ابری",
   "lang": "fa",
   "dir": "rtl",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#f8fafc",
+  "background_color": "#667eea",
   "theme_color": "#6366f1",
   "icons": []
 }

@@ -5,6 +5,7 @@
 
   class AppClass {
     constructor() {
+      Utils.injectIcons(document);
       this.store = new global.Store();
       this.ui = new global.UI(this.store);
       this.sync = new global.CloudSync(this.store);
@@ -34,9 +35,7 @@
       const search = document.getElementById('searchInput');
       search.oninput = Utils.debounce(() => this.ui.setFilter({ q: search.value.trim() }), 150);
 
-      document.getElementById('categoryFilter').onchange = (e) => {
-        this.ui.setFilter({ category: e.target.value });
-      };
+      document.getElementById('categoryFilter').onchange = (e) => this.ui.setFilter({ category: e.target.value });
 
       document.querySelectorAll('input[name="status"]').forEach(r => {
         r.onchange = () => { if (r.checked) this.ui.setFilter({ status: r.value }); };
@@ -77,16 +76,8 @@
 
       const urlInput = document.getElementById('syncUrl');
       const keyInput = document.getElementById('syncKey');
-
-      urlInput.oninput = (e) => {
-        const v = e.target.value.trim();
-        this.store.saveSettings({ syncUrl: v });
-        this._reflectSyncConfig();
-      };
-      keyInput.oninput = (e) => {
-        this.store.saveSettings({ syncKey: e.target.value.trim() });
-        this._reflectSyncConfig();
-      };
+      urlInput.oninput = (e) => { this.store.saveSettings({ syncUrl: e.target.value.trim() }); this._reflectSyncConfig(); };
+      keyInput.oninput = (e) => { this.store.saveSettings({ syncKey: e.target.value.trim() }); this._reflectSyncConfig(); };
     }
 
     _bindGuide() {
@@ -97,10 +88,7 @@
     }
 
     _bindBulk() {
-      document.getElementById('bulkClear').onclick = () => {
-        this.ui.selected.clear();
-        this.ui._render();
-      };
+      document.getElementById('bulkClear').onclick = () => { this.ui.selected.clear(); this.ui._render(); };
       document.getElementById('bulkDelete').onclick = () => {
         const n = Utils.toPersianDigits(this.ui.selected.size);
         if (confirm(n + ' کار حذف شوند؟')) {
@@ -134,13 +122,9 @@
     _bindShortcuts() {
       document.addEventListener('keydown', (e) => {
         const mod = e.ctrlKey || e.metaKey;
-        if (mod && e.key.toLowerCase() === 'k') {
-          e.preventDefault();
-          document.getElementById('searchInput').focus();
-        } else if (mod && e.key.toLowerCase() === 'n') {
-          e.preventDefault();
-          this.openEditor(null);
-        } else if (e.key === 'Escape') {
+        if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); document.getElementById('searchInput').focus(); }
+        else if (mod && e.key.toLowerCase() === 'n') { e.preventDefault(); this.openEditor(null); }
+        else if (e.key === 'Escape') {
           document.getElementById('modal').hidden = true;
           document.getElementById('settingsModal').hidden = true;
           document.getElementById('guideModal').hidden = true;
@@ -149,16 +133,13 @@
     }
 
     _autoSyncLoop() {
-      setInterval(() => {
-        if (this.sync.hasConfig()) this.doSync().catch(() => {});
-      }, 60000);
+      setInterval(() => { if (this.sync.hasConfig()) this.doSync().catch(() => {}); }, 60000);
     }
 
     _reflectSyncConfig() {
-      const ok = this.sync.hasConfig();
-      const dot = document.getElementById('syncDot');
-      const text = document.getElementById('syncText');
-      if (!ok) {
+      if (!this.sync.hasConfig()) {
+        const dot = document.getElementById('syncDot');
+        const text = document.getElementById('syncText');
         dot.classList.remove('syncing', 'error');
         text.textContent = 'فقط محلی';
       }
@@ -175,7 +156,8 @@
       }
       const jalali = Utils.formatJalaliDate(iso);
       const short = Utils.formatJalaliShort(iso);
-      preview.textContent = '📅 ' + jalali + '  (' + short + ')';
+      const past = Utils.isPastDate(iso) ? ' • گذشته' : '';
+      preview.textContent = jalali + ' (' + short + ')' + past;
       preview.classList.remove('empty');
     }
 
@@ -203,23 +185,16 @@
       const id = document.getElementById('itemId').value;
       const title = document.getElementById('itemTitle').value.trim();
       if (!title) { Utils.toast('عنوان الزامی است'); return; }
-
-      const tagsRaw = document.getElementById('itemTags').value;
-      const tags = tagsRaw
-        .split(/[,،]/)
-        .map(t => t.trim())
-        .filter(Boolean);
-
-      const linksRaw = document.getElementById('itemLinks').value;
-      const links = Utils.parseLinks(linksRaw);
-
+      const tags = document.getElementById('itemTags').value
+        .split(/[,،]/).map(t => t.trim()).filter(Boolean);
+      const links = Utils.parseLinks(document.getElementById('itemLinks').value);
       const data = {
-        title: title,
+        title,
         description: document.getElementById('itemDesc').value.trim(),
         category: document.getElementById('itemCategory').value.trim(),
         date: document.getElementById('itemDate').value,
-        tags: tags,
-        links: links,
+        tags,
+        links,
         done: document.getElementById('itemDone').checked
       };
       if (id) this.store.update(id, data);
@@ -234,20 +209,14 @@
       document.getElementById('syncKey').value = s.syncKey || '';
       document.getElementById('syncStatusText').textContent = this.sync.hasConfig()
         ? 'آماده همگام‌سازی.'
-        : 'برای فعال‌سازی همگام‌سازی، شناسه Gist و توکن را وارد کنید.';
+        : 'برای فعال‌سازی، شناسه Gist و توکن را وارد کنید.';
       document.getElementById('settingsModal').hidden = false;
     }
 
-    openGuide() {
-      document.getElementById('guideModal').hidden = false;
-    }
+    openGuide() { document.getElementById('guideModal').hidden = false; }
 
     export() {
-      const data = {
-        version: 1,
-        exportedAt: new Date().toISOString(),
-        items: this.store.list()
-      };
+      const data = { version: 1, exportedAt: new Date().toISOString(), items: this.store.list() };
       Utils.download('works-' + Date.now() + '.json', JSON.stringify(data, null, 2));
       Utils.toast('خروجی گرفته شد');
     }
@@ -262,16 +231,12 @@
         if (!Array.isArray(items)) throw new Error('فرمت فایل نامعتبر است');
         const n = Utils.toPersianDigits(items.length);
         const merge = confirm(
-          'وارد کردن ' + n + ' کار.\n\n' +
-          'تأیید = ادغام با داده‌های موجود (پیشنهادی)\n' +
-          'لغو = جایگزینی کامل داده‌های موجود'
+          'وارد کردن ' + n + ' کار.\n\nتأیید = ادغام\nلغو = جایگزینی کامل'
         );
         if (merge) this.store.mergeAll(items);
         else this.store.replaceAll(items);
         Utils.toast(n + ' کار وارد شد');
-      } catch (err) {
-        Utils.toast('خطا در ورود داده: ' + err.message);
-      }
+      } catch (err) { Utils.toast('خطا: ' + err.message); }
       e.target.value = '';
     }
 
@@ -280,8 +245,7 @@
         const info = await this.sync.testConnection();
         const files = info.files.length ? info.files.join(', ') : 'خالی';
         document.getElementById('syncStatusText').textContent =
-          '✓ متصل به Gist ' + String(info.id).slice(0, 8) + '… | فایل‌ها: ' + files +
-          (info.hasWorksFile ? '' : ' (works.json در اولین ارسال ساخته می‌شود)');
+          '✓ متصل | فایل‌ها: ' + files + (info.hasWorksFile ? '' : ' (works.json ساخته می‌شود)');
         Utils.toast('اتصال برقرار است');
       } catch (err) {
         Utils.toast('✗ ' + err.message);
@@ -291,16 +255,12 @@
 
     async doSync() {
       if (!this.sync.hasConfig()) {
-        Utils.toast('ابتدا همگام‌سازی را تنظیم کنید (تنظیمات → راهنما)');
+        Utils.toast('ابتدا همگام‌سازی را تنظیم کنید');
         this.openSettings();
         return;
       }
-      try {
-        await this.sync.sync();
-        Utils.toast('همگام‌سازی شد');
-      } catch (err) {
-        Utils.toast('خطای همگام‌سازی: ' + err.message);
-      }
+      try { await this.sync.sync(); Utils.toast('همگام‌سازی شد'); }
+      catch (err) { Utils.toast('خطا: ' + err.message); }
     }
   }
 
@@ -308,7 +268,5 @@
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
-  global.addEventListener('DOMContentLoaded', () => {
-    global.App = new AppClass();
-  });
+  global.addEventListener('DOMContentLoaded', () => { global.App = new AppClass(); });
 })(window);
