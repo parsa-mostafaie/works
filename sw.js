@@ -1,4 +1,4 @@
-const CACHE = 'works-v6';
+const CACHE = 'works-v7';
 const ASSETS = [
   './','./index.html','./styles.css','./manifest.json',
   './js/utils.js','./js/storage.js','./js/sync.js','./js/calendar.js','./js/ui.js','./js/app.js'

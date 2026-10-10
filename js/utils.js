@@ -45,8 +45,9 @@
     clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
     flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>',
     info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
-    sliders: '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
-    'arrow-left': '<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>'
+    keyboard: '<rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6.01" y2="10"/><line x1="10" y1="10" x2="10.01" y2="10"/><line x1="14" y1="10" x2="14.01" y2="10"/><line x1="18" y1="10" x2="18.01" y2="10"/><line x1="7" y1="14" x2="17" y2="14"/>',
+    sparkles: '<path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9L12 3z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z"/><path d="M5 15l.7 1.6L7.3 17.3l-1.6.7L5 19.6l-.7-1.6L2.7 17.3l1.6-.7L5 15z"/>',
+    sliders: '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>'
   };
 
   function iconSvg(name, size) {
@@ -55,7 +56,6 @@
     return '<svg xmlns="http://www.w3.org/2000/svg" width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + body + '</svg>';
   }
 
-  /* ---------------- Jalali conversion ---------------- */
   function gregorianToJalali(gy, gm, gd) {
     const g_d_m = [0,31,59,90,120,151,181,212,243,273,304,334];
     const gy2 = (gm > 2) ? (gy + 1) : gy;
@@ -121,20 +121,10 @@
     }).filter(l => l.url);
   }
 
-  /* ---------------- Timing helpers ---------------- */
-
-  /**
-   * Normalize a raw item's timing fields to be internally consistent.
-   * Returns a shallow-copied object with timeType, date, endDate, time, isDeadline set.
-   */
   function normalizeTiming(item) {
     const out = Object.assign({}, item);
     let tt = out.timeType;
-    if (!tt) {
-      // Infer from legacy shape
-      if (out.date) tt = 'single';
-      else tt = 'tba';
-    }
+    if (!tt) tt = out.date ? 'single' : 'tba';
     if (!TIME_TYPES[tt]) tt = 'single';
     out.timeType = tt;
     out.date = out.date || '';
@@ -146,54 +136,24 @@
     return out;
   }
 
-  /**
-   * Effective end date for priority/sort decisions.
-   * - single → the date
-   * - range → the endDate (or date if endDate is missing)
-   * - ongoing → null (never "past")
-   * - tba → null
-   */
   function getEffectiveEnd(item) {
     if (!item || !item.timeType) return item && item.date ? item.date : null;
     if (item.timeType === 'ongoing' || item.timeType === 'tba') return null;
     if (item.timeType === 'range') return item.endDate || item.date || null;
     return item.date || null;
   }
+  function getEffectiveStart(item) { return item ? (item.date || null) : null; }
 
-  /**
-   * Effective start date.
-   */
-  function getEffectiveStart(item) {
-    if (!item) return null;
-    return item.date || null;
-  }
-
-  /**
-   * Human-readable Persian description of the timing.
-   * Examples:
-   *   "۱۵ مهر ۱۴۰۵"
-   *   "از ۱۵ تا ۲۰ مهر ۱۴۰۵"
-   *   "از ۱۵ مهر ۱۴۰۵ به بعد"
-   *   "تاریخ نامعلوم"
-   *   "۱۵ مهر ۱۴۰۵ — ساعت ۱۶:۰۰"
-   */
   function formatItemTiming(item) {
     if (!item) return '';
     const tt = item.timeType || 'single';
     if (tt === 'tba' || !item.date) return 'تاریخ نامعلوم';
-
     const start = formatJalaliDate(item.date);
     const end = item.endDate ? formatJalaliDate(item.endDate) : '';
-
     let text = start;
-    if (tt === 'range' && end) {
-      text = 'از ' + start + ' تا ' + end;
-    } else if (tt === 'ongoing') {
-      text = 'از ' + start + ' به بعد';
-    }
-    if (item.time) {
-      text += ' — ساعت ' + toPersianDigits(item.time);
-    }
+    if (tt === 'range' && end) text = 'از ' + start + ' تا ' + end;
+    else if (tt === 'ongoing') text = 'از ' + start + ' به بعد';
+    if (item.time) text += ' — ' + toPersianDigits(item.time);
     return text;
   }
 
@@ -217,10 +177,6 @@
     const [gy, gm, gd] = jalaliToGregorian(jy, jm, jd);
     return gy + '-' + pad2(gm) + '-' + pad2(gd);
   }
-
-  /**
-   * Enumerate all ISO dates between start and end inclusive.
-   */
   function enumerateDates(startIso, endIso) {
     if (!startIso) return [];
     if (!endIso || endIso < startIso) return [startIso];
@@ -327,6 +283,102 @@
         if (el.querySelector('svg')) return;
         el.innerHTML = iconSvg(name);
       });
+    },
+
+    /**
+     * A small, illustrative sample dataset for first-time users.
+     * Uses relative dates so it always looks "fresh".
+     */
+    sampleItems() {
+      const now = new Date();
+      const iso = (offsetDays) => {
+        const d = new Date(now);
+        d.setDate(d.getDate() + offsetDays);
+        return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate());
+      };
+      const t = Date.now();
+      return [
+        {
+          id: 'sample_1',
+          title: 'پروژه بیوانفورماتیک — ددلاین نهایی',
+          description: 'آخرین مهلت ارسال اصل پروژه بیوانفورماتیک به دبیرخانه.',
+          category: 'بیوانفورماتیک',
+          tags: ['مهلت', 'پروژه'],
+          links: [{ label: 'bio.sampad.gov.ir', url: 'https://bio.sampad.gov.ir/' }],
+          done: false,
+          timeType: 'single',
+          date: iso(7),
+          endDate: '',
+          time: '23:59',
+          isDeadline: true,
+          createdAt: t,
+          updatedAt: t
+        },
+        {
+          id: 'sample_2',
+          title: 'کارگاه حضوری تهران',
+          description: 'کارگاه سه‌روزه با تمرکز بر ابزارهای تحلیل داده.',
+          category: 'المپیاد',
+          tags: ['کارگاه', 'تهران'],
+          links: [],
+          done: false,
+          timeType: 'range',
+          date: iso(14),
+          endDate: iso(16),
+          time: '09:00',
+          isDeadline: false,
+          createdAt: t,
+          updatedAt: t
+        },
+        {
+          id: 'sample_3',
+          title: 'مطالعه ترکیبیات — ادامه',
+          description: 'مطالعه مستمر کتاب ترکیبیات سبز علیپور، فصل ۴ و ۵.',
+          category: 'مطالعه',
+          tags: ['مطالعه', 'ریاضی'],
+          links: [],
+          done: false,
+          timeType: 'ongoing',
+          date: iso(-3),
+          endDate: '',
+          time: '',
+          isDeadline: false,
+          createdAt: t,
+          updatedAt: t
+        },
+        {
+          id: 'sample_4',
+          title: 'مسابقه Code Kitchen',
+          description: 'مسابقه مهندسی داده با همکاری DataChef — آنلاین در کوئرا.',
+          category: 'فناوری و برنامه‌نویسی',
+          tags: ['مسابقه', 'داده', 'کوئرا'],
+          links: [{ label: 'ثبت‌نام در کوئرا', url: 'https://quera.org/' }],
+          done: false,
+          timeType: 'single',
+          date: iso(3),
+          endDate: '',
+          time: '16:00',
+          isDeadline: false,
+          createdAt: t,
+          updatedAt: t
+        },
+        {
+          id: 'sample_5',
+          title: 'المپیاد ملی مهارت',
+          description: 'برای دوره‌ی آینده به سایت مبتکران مراجعه کنید.',
+          category: 'المپیاد',
+          tags: ['بدون تاریخ'],
+          links: [],
+          done: false,
+          timeType: 'tba',
+          date: '',
+          endDate: '',
+          time: '',
+          isDeadline: false,
+          createdAt: t,
+          updatedAt: t
+        }
+      ];
     }
   };
 

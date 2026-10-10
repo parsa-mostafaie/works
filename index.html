@@ -34,19 +34,22 @@
         <span class="icon" data-icon="plus"></span>
         <span>افزودن</span>
       </button>
-      <button class="btn" id="calendarBtn" title="تقویم رویدادها">
+      <button class="btn" id="calendarBtn" title="تقویم رویدادها (Ctrl+L)">
         <span class="icon" data-icon="calendar"></span>
       </button>
-      <button class="btn" id="importBtn" title="ورود از فایل JSON">
+      <button class="btn" id="importBtn" title="ورود از فایل JSON (Ctrl+I)">
         <span class="icon" data-icon="import"></span>
       </button>
-      <button class="btn" id="exportBtn" title="خروجی به فایل JSON">
+      <button class="btn" id="exportBtn" title="خروجی به فایل JSON (Ctrl+E)">
         <span class="icon" data-icon="export"></span>
       </button>
-      <button class="btn" id="syncBtn" title="همگام‌سازی ابری">
+      <button class="btn" id="syncBtn" title="همگام‌سازی ابری (Ctrl+S)">
         <span class="icon" data-icon="cloud"></span>
       </button>
-      <button class="btn" id="settingsBtn" title="تنظیمات">
+      <button class="btn" id="shortcutsBtn" title="میان‌برها (Ctrl+/)">
+        <span class="icon" data-icon="keyboard"></span>
+      </button>
+      <button class="btn" id="settingsBtn" title="تنظیمات (Ctrl+,)">
         <span class="icon" data-icon="settings"></span>
       </button>
     </div>
@@ -247,6 +250,102 @@
     </div>
   </div>
 
+  <div class="modal" id="shortcutsModal" hidden>
+    <div class="modal-content glass-strong shortcuts-modal-content">
+      <div class="modal-header">
+        <h2><span class="icon" data-icon="keyboard"></span> میان‌برهای صفحه‌کلید</h2>
+        <button class="icon-btn" id="shortcutsClose" title="بستن"><span data-icon="x"></span></button>
+      </div>
+      <div class="modal-body shortcuts-body">
+        <div class="shortcut-group">
+          <h3><span class="icon" data-icon="plus"></span> کارها</h3>
+          <div class="shortcut-row"><span>کار جدید</span><span class="keys"><kbd>Ctrl</kbd><kbd>N</kbd></span></div>
+          <div class="shortcut-row"><span>جستجو</span><span class="keys"><kbd>Ctrl</kbd><kbd>K</kbd></span></div>
+          <div class="shortcut-row"><span>تقویم</span><span class="keys"><kbd>Ctrl</kbd><kbd>L</kbd></span></div>
+        </div>
+
+        <div class="shortcut-group">
+          <h3><span class="icon" data-icon="database"></span> داده‌ها</h3>
+          <div class="shortcut-row"><span>ورود از فایل</span><span class="keys"><kbd>Ctrl</kbd><kbd>I</kbd></span></div>
+          <div class="shortcut-row"><span>خروجی به فایل</span><span class="keys"><kbd>Ctrl</kbd><kbd>E</kbd></span></div>
+          <div class="shortcut-row"><span>همگام‌سازی</span><span class="keys"><kbd>Ctrl</kbd><kbd>S</kbd></span></div>
+        </div>
+
+        <div class="shortcut-group">
+          <h3><span class="icon" data-icon="settings"></span> ناوبری</h3>
+          <div class="shortcut-row"><span>تنظیمات</span><span class="keys"><kbd>Ctrl</kbd><kbd>,</kbd></span></div>
+          <div class="shortcut-row"><span>این پنجره</span><span class="keys"><kbd>Ctrl</kbd><kbd>/</kbd></span></div>
+          <div class="shortcut-row"><span>بستن همه</span><span class="keys"><kbd>Esc</kbd></span></div>
+        </div>
+
+        <div class="shortcut-group">
+          <h3><span class="icon" data-icon="check"></span> عملیات گروهی</h3>
+          <div class="shortcut-row"><span>علامت‌گذاری انتخاب‌شده‌ها</span><span class="keys"><kbd>Ctrl</kbd><kbd>D</kbd></span></div>
+          <div class="shortcut-row"><span>انتخاب همه</span><span class="keys"><kbd>Ctrl</kbd><kbd>A</kbd></span></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="shortcutsOk"><span class="icon" data-icon="check"></span> فهمیدم</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="welcomeModal" hidden>
+    <div class="modal-content glass-strong welcome-modal-content">
+      <div class="welcome-hero">
+        <div class="welcome-logo" data-icon="layers"></div>
+        <h2>به «کارها» خوش آمدید</h2>
+        <p class="welcome-sub">یک مدیر کار ساده، سریع و کاملاً فارسی با تقویم شمسی و همگام‌سازی اختیاری</p>
+      </div>
+
+      <div class="welcome-body">
+        <div class="welcome-features">
+          <div class="welcome-feature">
+            <div class="wf-icon" data-icon="calendar"></div>
+            <div>
+              <strong>تاریخ و زمان‌بندی</strong>
+              <span>تک‌روزه، بازه چندروزه، مستمر یا بدون تاریخ</span>
+            </div>
+          </div>
+          <div class="welcome-feature">
+            <div class="wf-icon" data-icon="link"></div>
+            <div>
+              <strong>پیوند، برچسب و دسته</strong>
+              <span>هر کار می‌تواند چندین پیوند و برچسب داشته باشد</span>
+            </div>
+          </div>
+          <div class="welcome-feature">
+            <div class="wf-icon" data-icon="cloud"></div>
+            <div>
+              <strong>همگام‌سازی ابری</strong>
+              <span>بین همه دستگاه‌ها با یک Gist خصوصی GitHub</span>
+            </div>
+          </div>
+          <div class="welcome-feature">
+            <div class="wf-icon" data-icon="keyboard"></div>
+            <div>
+              <strong>میان‌برهای سریع</strong>
+              <span><kbd>Ctrl</kbd><kbd>N</kbd> برای کار جدید، <kbd>Ctrl</kbd><kbd>K</kbd> برای جستجو</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="welcome-actions">
+          <button class="btn btn-primary" id="welcomeStart">
+            <span class="icon" data-icon="plus"></span> افزودن اولین کار
+          </button>
+          <button class="btn" id="welcomeSample">
+            <span class="icon" data-icon="sparkles"></span> بارگذاری داده نمونه
+          </button>
+          <button class="btn" id="welcomeShortcuts">
+            <span class="icon" data-icon="keyboard"></span> میان‌برها
+          </button>
+          <button class="btn btn-ghost" id="welcomeSkip">شروع خالی</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="modal" id="settingsModal" hidden>
     <div class="modal-content glass-strong">
       <div class="modal-header">
@@ -283,7 +382,11 @@
         <p class="status-text" id="syncStatusText"></p>
         <hr>
         <h3><span class="icon" data-icon="database"></span> داده‌ها</h3>
-        <button class="btn btn-danger" id="clearAllBtn"><span class="icon" data-icon="alert"></span> پاک‌کردن همه داده‌ها</button>
+        <div class="row-actions">
+          <button class="btn" id="openShortcutsBtn"><span class="icon" data-icon="keyboard"></span> میان‌برها</button>
+          <button class="btn" id="openWelcomeBtn"><span class="icon" data-icon="sparkles"></span> نمایش راهنمای شروع</button>
+        </div>
+        <button class="btn btn-danger" id="clearAllBtn" style="margin-top:8px"><span class="icon" data-icon="alert"></span> پاک‌کردن همه داده‌ها</button>
       </div>
     </div>
   </div>

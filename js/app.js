@@ -16,12 +16,17 @@
       this._bindModal();
       this._bindTiming();
       this._bindGuide();
+      this._bindShortcutsModal();
+      this._bindWelcomeModal();
       this._bindBulk();
       this._bindSync();
-      this._bindShortcuts();
+      this._bindKeyboardShortcuts();
       this._autoSyncLoop();
       this._reflectSyncConfig();
+      this._maybeShowWelcome();
     }
+
+    /* ================= Header & filters ================= */
 
     _bindHeader() {
       document.getElementById('addBtn').onclick = () => this.openEditor(null);
@@ -30,6 +35,7 @@
       document.getElementById('settingsBtn').onclick = () => this.openSettings();
       document.getElementById('syncBtn').onclick = () => this.doSync();
       document.getElementById('calendarBtn').onclick = () => this.calendar.open();
+      document.getElementById('shortcutsBtn').onclick = () => this.openShortcuts();
       document.getElementById('fileInput').onchange = (e) => this.import(e);
       document.getElementById('list').addEventListener('click', (e) => this.ui.handleListClick(e));
     }
@@ -53,6 +59,8 @@
       sortSel.onchange = (e) => this.ui.setSort(e.target.value);
     }
 
+    /* ================= Item editor modal ================= */
+
     _bindModal() {
       const modal = document.getElementById('modal');
       const close = () => { modal.hidden = true; };
@@ -70,6 +78,8 @@
       document.getElementById('testConnBtn').onclick = () => this.testConnection();
       document.getElementById('openGuideBtn').onclick = () => this.openGuide();
       document.getElementById('openGuideBtn2').onclick = () => this.openGuide();
+      document.getElementById('openShortcutsBtn').onclick = () => { sm.hidden = true; setTimeout(() => this.openShortcuts(), 50); };
+      document.getElementById('openWelcomeBtn').onclick = () => { sm.hidden = true; setTimeout(() => this.openWelcome(), 50); };
 
       document.getElementById('clearAllBtn').onclick = () => {
         if (confirm('همه کارها حذف شوند؟ این عمل قابل بازگشت نیست.')) {
@@ -85,36 +95,30 @@
     }
 
     _bindTiming() {
-      // timeType radio changes
       document.querySelectorAll('input[name="timeType"]').forEach(r => {
-        r.addEventListener('change', () => {
-          if (r.checked) this._applyTimeType(r.value);
-        });
+        r.addEventListener('change', () => { if (r.checked) this._applyTimeType(r.value); });
       });
 
-      // Start date picker
       document.getElementById('itemDateBtn').onclick = () => {
         const current = document.getElementById('itemDate').value || '';
         const isRange = this._getTimeType() === 'range';
-        this.calendar.openPicker(current, (iso) => {
-          this._setStartDate(iso);
-        }, { title: isRange ? 'انتخاب تاریخ شروع' : 'انتخاب تاریخ' });
+        this.calendar.openPicker(current, (iso) => this._setStartDate(iso), {
+          title: isRange ? 'انتخاب تاریخ شروع' : 'انتخاب تاریخ'
+        });
       };
       document.getElementById('itemDateClear').onclick = () => this._setStartDate('');
 
-      // End date picker
       document.getElementById('itemEndDateBtn').onclick = () => {
         const startIso = document.getElementById('itemDate').value || '';
         const currentEnd = document.getElementById('itemEndDate').value || '';
-        this.calendar.openPicker(currentEnd || startIso, (iso) => {
-          this._setEndDate(iso);
-        }, { title: 'انتخاب تاریخ پایان' });
+        this.calendar.openPicker(currentEnd || startIso, (iso) => this._setEndDate(iso), {
+          title: 'انتخاب تاریخ پایان'
+        });
       };
       document.getElementById('itemEndDateClear').onclick = () => this._setEndDate('');
-
-      // Auto-persianify time input digits
-      Utils.autoPersianify(document.getElementById('itemTime') ? document.getElementById('itemTime').parentNode : document);
     }
+
+    /* ================= Guide modal ================= */
 
     _bindGuide() {
       const gm = document.getElementById('guideModal');
@@ -123,24 +127,90 @@
       gm.addEventListener('click', (e) => { if (e.target === gm) close(); });
     }
 
+    /* ================= Shortcuts modal ================= */
+
+    _bindShortcutsModal() {
+      const sm = document.getElementById('shortcutsModal');
+      const close = () => { sm.hidden = true; };
+      document.getElementById('shortcutsClose').onclick = close;
+      document.getElementById('shortcutsOk').onclick = close;
+      sm.addEventListener('click', (e) => { if (e.target === sm) close(); });
+    }
+
+    openShortcuts() {
+      document.getElementById('shortcutsModal').hidden = false;
+    }
+
+    toggleShortcuts() {
+      const sm = document.getElementById('shortcutsModal');
+      sm.hidden = !sm.hidden;
+    }
+
+    /* ================= Welcome / FTUX ================= */
+
+    _bindWelcomeModal() {
+      const wm = document.getElementById('welcomeModal');
+      const dismiss = () => {
+        wm.hidden = true;
+        this.store.markFtuxSeen();
+      };
+
+      document.getElementById('welcomeStart').onclick = () => {
+        dismiss();
+        this.openEditor(null);
+      };
+      document.getElementById('welcomeSample').onclick = () => {
+        const samples = Utils.sampleItems();
+        this.store.mergeAll(samples);
+        dismiss();
+        Utils.toast(Utils.toPersianDigits(samples.length) + ' کار نمونه اضافه شد');
+      };
+      document.getElementById('welcomeShortcuts').onclick = () => {
+        dismiss();
+        setTimeout(() => this.openShortcuts(), 50);
+      };
+      document.getElementById('welcomeSkip').onclick = dismiss;
+
+      wm.addEventListener('click', (e) => { if (e.target === wm) dismiss(); });
+    }
+
+    openWelcome() {
+      document.getElementById('welcomeModal').hidden = false;
+    }
+
+    _maybeShowWelcome() {
+      const s = this.store.getSettings();
+      if (!s.ftuxSeen) {
+        // Small delay so icons & layout settle first
+        setTimeout(() => this.openWelcome(), 250);
+      }
+    }
+
+    /* ================= Bulk actions ================= */
+
     _bindBulk() {
       document.getElementById('bulkClear').onclick = () => { this.ui.selected.clear(); this.ui._render(); };
-      document.getElementById('bulkDelete').onclick = () => {
-        const n = Utils.toPersianDigits(this.ui.selected.size);
-        if (confirm(n + ' کار حذف شوند؟')) {
-          this.store.removeMany(Array.from(this.ui.selected));
-          this.ui.selected.clear();
-        }
-      };
-      document.getElementById('bulkDone').onclick = () => {
-        this.store.updateMany(Array.from(this.ui.selected), { done: true });
-        this.ui.selected.clear();
-      };
-      document.getElementById('bulkUndone').onclick = () => {
-        this.store.updateMany(Array.from(this.ui.selected), { done: false });
-        this.ui.selected.clear();
-      };
+      document.getElementById('bulkDelete').onclick = () => this.bulkDelete();
+      document.getElementById('bulkDone').onclick = () => this.bulkMark(true);
+      document.getElementById('bulkUndone').onclick = () => this.bulkMark(false);
     }
+
+    bulkDelete() {
+      if (this.ui.selected.size === 0) return;
+      const n = Utils.toPersianDigits(this.ui.selected.size);
+      if (confirm(n + ' کار حذف شوند؟')) {
+        this.store.removeMany(Array.from(this.ui.selected));
+        this.ui.selected.clear();
+      }
+    }
+
+    bulkMark(done) {
+      if (this.ui.selected.size === 0) return;
+      this.store.updateMany(Array.from(this.ui.selected), { done });
+      this.ui.selected.clear();
+    }
+
+    /* ================= Sync ================= */
 
     _bindSync() {
       this.sync.onStatus((s, msg) => {
@@ -152,20 +222,6 @@
         else { text.textContent = msg || 'آماده'; }
         const st = document.getElementById('syncStatusText');
         if (st) st.textContent = msg || '';
-      });
-    }
-
-    _bindShortcuts() {
-      document.addEventListener('keydown', (e) => {
-        const mod = e.ctrlKey || e.metaKey;
-        if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); document.getElementById('searchInput').focus(); }
-        else if (mod && e.key.toLowerCase() === 'n') { e.preventDefault(); this.openEditor(null); }
-        else if (e.key === 'Escape') {
-          document.getElementById('modal').hidden = true;
-          document.getElementById('settingsModal').hidden = true;
-          document.getElementById('guideModal').hidden = true;
-          document.getElementById('calendarModal').hidden = true;
-        }
       });
     }
 
@@ -182,7 +238,103 @@
       }
     }
 
-    /* ---------- Timing UI helpers ---------- */
+    /* ================= Keyboard shortcuts ================= */
+
+    _bindKeyboardShortcuts() {
+      document.addEventListener('keydown', (e) => {
+        const mod = e.ctrlKey || e.metaKey;
+        const key = (e.key || '').toLowerCase();
+
+        // ---- Modifier combos ----
+        if (mod) {
+          // Ctrl+K — search
+          if (key === 'k') {
+            e.preventDefault();
+            document.getElementById('searchInput').focus();
+            document.getElementById('searchInput').select();
+            return;
+          }
+          // Ctrl+N — new
+          if (key === 'n') {
+            e.preventDefault();
+            this.openEditor(null);
+            return;
+          }
+          // Ctrl+/ — shortcuts
+          if (key === '/' || key === '?') {
+            e.preventDefault();
+            this.toggleShortcuts();
+            return;
+          }
+          // Ctrl+, — settings
+          if (key === ',' || key === '،') {
+            e.preventDefault();
+            this.openSettings();
+            return;
+          }
+          // Ctrl+S — sync
+          if (key === 's' && !e.shiftKey) {
+            e.preventDefault();
+            this.doSync();
+            return;
+          }
+          // Ctrl+I — import
+          if (key === 'i') {
+            e.preventDefault();
+            document.getElementById('fileInput').click();
+            return;
+          }
+          // Ctrl+E — export
+          if (key === 'e') {
+            e.preventDefault();
+            this.export();
+            return;
+          }
+          // Ctrl+L — calendar
+          if (key === 'l') {
+            e.preventDefault();
+            this.calendar.open();
+            return;
+          }
+          // Ctrl+A — select all visible
+          if (key === 'a') {
+            const list = document.getElementById('list');
+            const visibleIds = Array.from(list.querySelectorAll('.item')).map(el => el.dataset.id);
+            if (visibleIds.length) {
+              e.preventDefault();
+              visibleIds.forEach(id => this.ui.selected.add(id));
+              this.ui._render();
+            }
+            return;
+          }
+          // Ctrl+D — mark selected done
+          if (key === 'd') {
+            if (this.ui.selected.size) {
+              e.preventDefault();
+              this.bulkMark(!e.shiftKey);
+            }
+            return;
+          }
+        }
+
+        // ---- Plain keys ----
+        if (e.key === 'Escape') {
+          ['modal', 'settingsModal', 'guideModal', 'calendarModal', 'shortcutsModal', 'welcomeModal']
+            .forEach(id => { const el = document.getElementById(id); if (el) el.hidden = true; });
+          return;
+        }
+        if (e.key === '?' && !mod) {
+          // Only when not typing in an input
+          const tag = (document.activeElement && document.activeElement.tagName) || '';
+          if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+            e.preventDefault();
+            this.toggleShortcuts();
+          }
+        }
+      });
+    }
+
+    /* ================= Timing UI helpers ================= */
 
     _getTimeType() {
       const el = document.querySelector('input[name="timeType"]:checked');
@@ -201,14 +353,12 @@
       const endLabel = document.getElementById('dateEndLabel');
       const timeWrap = document.getElementById('itemTime');
 
-      // Reset end date when leaving range mode
       if (tt !== 'range') {
         const currentEnd = document.getElementById('itemEndDate').value;
         if (currentEnd) this._setEndDate('');
       }
 
       if (tt === 'tba') {
-        // Hide start and end
         startLabel.hidden = true;
         endLabel.hidden = true;
         this._setStartDate('');
@@ -266,14 +416,13 @@
       }
     }
 
-    /* ---------- Editor ---------- */
+    /* ================= Editor ================= */
 
     openEditor(id) {
       const modal = document.getElementById('modal');
       const editing = !!id;
       document.getElementById('modalTitle').textContent = editing ? 'ویرایش کار' : 'کار جدید';
       const item = editing ? this.store.get(id) : null;
-
       const tt = item ? (item.timeType || 'single') : 'single';
 
       document.getElementById('itemId').value = id || '';
@@ -305,30 +454,17 @@
       let startDate = document.getElementById('itemDate').value || '';
       let endDate = document.getElementById('itemEndDate').value || '';
 
-      // Validation
       if (timeType === 'range') {
         if (!startDate) { Utils.toast('تاریخ شروع را انتخاب کنید'); return; }
-        if (endDate && endDate < startDate) {
-          Utils.toast('تاریخ پایان باید بعد از شروع باشد');
-          return;
-        }
-        if (!endDate) {
-          // Auto-fill with start date if user forgot
-          endDate = startDate;
-        }
+        if (endDate && endDate < startDate) { Utils.toast('تاریخ پایان باید بعد از شروع باشد'); return; }
+        if (!endDate) endDate = startDate;
       }
-
-      if (timeType === 'tba') {
-        startDate = '';
-        endDate = '';
-      } else if (timeType === 'single' || timeType === 'ongoing') {
-        endDate = '';
-      }
+      if (timeType === 'tba') { startDate = ''; endDate = ''; }
+      else if (timeType === 'single' || timeType === 'ongoing') endDate = '';
 
       const tags = Utils.toLatinDigits(document.getElementById('itemTags').value)
         .split(/[,،]/).map(t => t.trim()).filter(Boolean);
       const links = Utils.parseLinks(document.getElementById('itemLinks').value);
-
       const time = document.getElementById('itemTime').value || '';
 
       const data = {
@@ -351,7 +487,7 @@
       Utils.toast(id ? 'ویرایش شد' : 'اضافه شد');
     }
 
-    /* ---------- Settings & Guide ---------- */
+    /* ================= Settings ================= */
 
     openSettings() {
       const s = this.store.getSettings();
@@ -365,7 +501,7 @@
 
     openGuide() { document.getElementById('guideModal').hidden = false; }
 
-    /* ---------- Import / Export ---------- */
+    /* ================= Import / Export ================= */
 
     export() {
       const data = {
@@ -397,7 +533,7 @@
       e.target.value = '';
     }
 
-    /* ---------- Sync ---------- */
+    /* ================= Sync ================= */
 
     async testConnection() {
       try {

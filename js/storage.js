@@ -13,7 +13,8 @@
         syncUrl: '',
         syncKey: '',
         sort: 'date-asc',
-        timeTypeFilter: ''
+        timeTypeFilter: '',
+        ftuxSeen: false
       };
       this._load();
       this._setupCrossTab();
@@ -24,7 +25,6 @@
       if (!Array.isArray(it.tags)) it.tags = [];
       if (!Array.isArray(it.links)) it.links = [];
       const t = (global.Utils && Utils.normalizeTiming) ? Utils.normalizeTiming(it) : it;
-      // Preserve identity fields
       t.id = it.id;
       t.createdAt = it.createdAt || Date.now();
       t.updatedAt = it.updatedAt || t.createdAt;
@@ -35,13 +35,11 @@
       try {
         let raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) {
-          // Migrate from v1
           raw = localStorage.getItem(LEGACY_KEY);
           if (raw) {
             try {
               const arr = JSON.parse(raw);
               this.items = Array.isArray(arr) ? arr.map(x => this._normalize(x)) : [];
-              // Persist under new key; leave legacy key alone as a backup
               this._save();
             } catch (e) { this.items = []; }
             return;
@@ -170,6 +168,12 @@
     clearAll() { this.items = []; this._emit(); }
     getSettings() { return Object.assign({}, this.settings); }
     saveSettings(patch) { this.settings = Object.assign({}, this.settings, patch); this._save(); }
+    markFtuxSeen() {
+      if (!this.settings.ftuxSeen) {
+        this.settings.ftuxSeen = true;
+        this._save();
+      }
+    }
   }
 
   global.Store = Store;
