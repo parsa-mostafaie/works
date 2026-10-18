@@ -1,14 +1,14 @@
 {
   "name": "کارها",
   "short_name": "کارها",
-  "description": "مدیریت کارها با پشتیبانی از بازه‌های زمانی، تاریخ شمسی، تقویم رنگی و همگام‌سازی ابری",
+  "description": "مدیریت کارها با استایل شیشه‌ای، آیکون‌های SVG، تاریخ شمسی، تقویم رنگی و همگام‌سازی ابری",
   "lang": "fa",
   "dir": "rtl",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#667eea",
-  "theme_color": "#6366f1",
+  "background_color": "#fffbeb",
+  "theme_color": "#f59e0b",
   "icons": []
 }

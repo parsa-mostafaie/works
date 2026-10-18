@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#6366f1">
+  <meta name="theme-color" content="#f59e0b">
   <title>کارها</title>
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -72,7 +72,7 @@
       </div>
       <div class="filter-section">
         <h3><span class="icon" data-icon="filter"></span> وضعیت</h3>
-        <div class="radio-group">
+        <div class="radio-group" data-filter-group="status">
           <label class="radio-pill"><input type="radio" name="status" value="" checked><span>همه</span></label>
           <label class="radio-pill"><input type="radio" name="status" value="active"><span>فعال</span></label>
           <label class="radio-pill"><input type="radio" name="status" value="done"><span>انجام‌شده</span></label>
@@ -80,7 +80,7 @@
       </div>
       <div class="filter-section">
         <h3><span class="icon" data-icon="clock"></span> نوع زمان‌بندی</h3>
-        <div class="radio-group timing-filter-group">
+        <div class="radio-group timing-filter-group" data-filter-group="timeType">
           <label class="radio-pill"><input type="radio" name="timeTypeFilter" value="" checked><span>همه</span></label>
           <label class="radio-pill"><input type="radio" name="timeTypeFilter" value="single"><span>تک</span></label>
           <label class="radio-pill"><input type="radio" name="timeTypeFilter" value="range"><span>بازه</span></label>
@@ -163,7 +163,7 @@
                   <span class="icon" data-icon="calendar"></span>
                   <span id="itemDateText">انتخاب تاریخ…</span>
                 </button>
-                <button type="button" class="icon-btn jalali-clear-btn" id="itemDateClear" hidden title="پاک کردن">
+                <button type="button" class="icon-btn jalali-clear-btn" id="itemDateClear" hidden title="پاک کردن تاریخ">
                   <span data-icon="x"></span>
                 </button>
               </div>
@@ -177,7 +177,7 @@
                   <span class="icon" data-icon="calendar"></span>
                   <span id="itemEndDateText">انتخاب تاریخ…</span>
                 </button>
-                <button type="button" class="icon-btn jalali-clear-btn" id="itemEndDateClear" hidden title="پاک کردن">
+                <button type="button" class="icon-btn jalali-clear-btn" id="itemEndDateClear" hidden title="پاک کردن تاریخ">
                   <span data-icon="x"></span>
                 </button>
               </div>
@@ -235,10 +235,10 @@
         </div>
         <div class="cal-days" id="calDays"></div>
         <div class="cal-legend">
-          <span class="cal-legend-item"><span class="cal-legend-dot" style="background:#6366f1"></span> انتخاب‌شده</span>
+          <span class="cal-legend-item"><span class="cal-legend-dot" style="background:#f59e0b"></span> انتخاب‌شده</span>
           <span class="cal-legend-item"><span class="cal-legend-dot" style="background:#10b981"></span> بیوانفورماتیک</span>
           <span class="cal-legend-item"><span class="cal-legend-dot" style="background:#8b5cf6"></span> کارسوق</span>
-          <span class="cal-legend-item"><span class="cal-legend-dot" style="background:#f59e0b"></span> المپیاد</span>
+          <span class="cal-legend-item"><span class="cal-legend-dot" style="background:#f97316"></span> المپیاد</span>
           <span class="cal-legend-item"><span class="cal-legend-dot" style="background:#ec4899"></span> جشنواره</span>
           <span class="cal-legend-item"><span class="cal-legend-dot" style="background:#3b82f6"></span> فناوری</span>
           <span class="cal-legend-item"><span class="cal-legend-dot" style="background:#14b8a6"></span> علوم شناختی</span>
@@ -342,6 +342,62 @@
           </button>
           <button class="btn btn-ghost" id="welcomeSkip">شروع خالی</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="importModal" hidden>
+    <div class="modal-content glass-strong import-modal-content">
+      <div class="modal-header">
+        <h2><span class="icon" data-icon="import"></span> ورود داده‌ها</h2>
+        <button class="icon-btn" id="importClose" title="بستن"><span data-icon="x"></span></button>
+      </div>
+      <div class="modal-body">
+        <div class="import-summary" id="importSummary">در حال خواندن فایل…</div>
+
+        <div class="import-options">
+          <label class="import-option" data-import-option="merge">
+            <input type="radio" name="importMode" value="merge" checked>
+            <div class="import-option-body">
+              <div class="io-icon" data-icon="refresh"></div>
+              <div class="io-text">
+                <strong>ادغام هوشمند</strong>
+                <span>کارهای جدید اضافه می‌شوند. کارهای موجود فقط اگر در فایل نسخه‌ی جدیدتری داشته باشند به‌روزرسانی می‌شوند.</span>
+              </div>
+            </div>
+          </label>
+
+          <label class="import-option" data-import-option="force">
+            <input type="radio" name="importMode" value="force">
+            <div class="import-option-body">
+              <div class="io-icon io-force" data-icon="alert"></div>
+              <div class="io-text">
+                <strong>ادغام اجباری (فایل برنده)</strong>
+                <span>همه‌ی تغییرات فایل ورودی اعمال می‌شود، حتی اگر نسخه‌ی محلی جدیدتر باشد. مناسب برای همگام‌سازی schema.</span>
+              </div>
+            </div>
+          </label>
+
+          <label class="import-option" data-import-option="replace">
+            <input type="radio" name="importMode" value="replace">
+            <div class="import-option-body">
+              <div class="io-icon io-replace" data-icon="trash"></div>
+              <div class="io-text">
+                <strong>جایگزینی کامل</strong>
+                <span>همه‌ی کارهای فعلی حذف و با محتوای فایل جایگزین می‌شوند.</span>
+              </div>
+            </div>
+          </label>
+        </div>
+
+        <label class="checkbox import-backup-check">
+          <input type="checkbox" id="importBackup" checked>
+          <span><span class="icon" data-icon="save"></span> ابتدا از داده‌های فعلی یک نسخه پشتیبان بگیر</span>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="importCancel">انصراف</button>
+        <button class="btn btn-primary" id="importConfirm"><span class="icon" data-icon="import"></span> وارد کن</button>
       </div>
     </div>
   </div>

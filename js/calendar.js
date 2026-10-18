@@ -6,7 +6,7 @@
   const CATEGORY_COLORS = {
     'بیوانفورماتیک': '#10b981',
     'کارسوق سمپاد': '#8b5cf6',
-    'المپیاد': '#f59e0b',
+    'المپیاد': '#f97316',
     'جشنواره': '#ec4899',
     'فناوری و برنامه‌نویسی': '#3b82f6',
     'علوم شناختی': '#14b8a6',
@@ -78,12 +78,6 @@
       this.render();
     }
 
-    /**
-     * Open the calendar in "pick a date" mode.
-     * @param {string} initialIso  currently selected ISO date (or '')
-     * @param {function} callback  called with the picked ISO date (or '' if cleared)
-     * @param {object} options     { title, allowClear }
-     */
     openPicker(initialIso, callback, options) {
       options = options || {};
       this.mode = 'pick';
@@ -135,13 +129,6 @@
       return 'hsl(' + (h % 360) + ' 65% 55%)';
     }
 
-    /**
-     * Build a map ISO date → array of items that should be visible on that day.
-     * - single: only on its date
-     * - range: on every day between start and end
-     * - ongoing: only on its start date (with an "ongoing" marker)
-     * - tba: not shown on the calendar at all
-     */
     _groupByDate() {
       const byDate = {};
       const add = (iso, it) => {
@@ -159,7 +146,6 @@
           const days = Utils.enumerateDates(it.date, it.endDate);
           days.forEach(d => add(d, it));
         } else {
-          // single or ongoing (also covers range with no endDate)
           add(it.date, it);
         }
       });
@@ -188,7 +174,6 @@
         const isToday = iso === today;
         const isSelected = iso === this.selectedDate;
 
-        // Detect if this day is part of a multi-day range
         const hasRange = events.some(e => e.timeType === 'range');
 
         const cls = ['cal-cell'];
